@@ -4,8 +4,10 @@ import { PricingButton } from './PricingButton'
 import { ConsultationModal } from './ConsultationModal'
 import { cn } from '@/app/components/lib/utils'
 import type { PricingCardProps } from '../models'
+import { useTranslation } from 'react-i18next'
 
 export function PricingCard(props: PricingCardProps) {
+  const { t } = useTranslation()
   const { packageId, name, price, period, users, usage, features, buttonText = 'Tư vấn ngay', buttonColor, featured = false, bgClass } = props
   const [isModalOpen, setIsModalOpen] = useState(false)
   // (bgClass will be used for an accent stripe; card body stays white)
@@ -31,7 +33,7 @@ export function PricingCard(props: PricingCardProps) {
         </h3>
 
         <div className='mt-2 sm:mt-4 flex items-baseline justify-center gap-2'>
-          <span className='text-sm sm:text-base opacity-80'>Chỉ từ</span>
+          <span className='text-sm sm:text-base opacity-80'>{t('pricing.startingFrom')}</span>
           <span className='text-xl sm:text-3xl font-bold'>
             {typeof price === 'number' ? `${Math.round(price).toLocaleString('vi-VN')} ₫` : price}
           </span>

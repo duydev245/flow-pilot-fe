@@ -1,0 +1,177 @@
+{
+  "homeTitle": "Trang chủ",
+  "introductionTitle": "Giới thiệu",
+  "pricingTitle": "Bảng giá",
+  "contactTitle": "Liên hệ",
+  "logIn": "Đăng nhập",
+  "contactUsBtn": "Tư vấn ngay",
+
+  "hero": {
+    "title": "NỀN TẢNG QUẢN LÝ HIỆU SUẤT NHÂN SỰ TỪ XA"
+  },
+
+  "about": {
+    "title": "TẠI SAO CHỌN",
+    "description": "Nền tảng quản lý hiệu suất nhân sự toàn diện, giúp doanh nghiệp tối ưu hóa năng suất làm việc từ xa với công nghệ AI tiên tiến",
+    "effective": {
+      "title": "Quản lý nhân sự hiệu quả",
+      "description": "Theo dõi và đánh giá hiệu suất làm việc của từng thành viên một cách chi tiết và chính xác"
+    },
+    "smart_data": {
+      "title": "Phân tích dữ liệu thông minh",
+      "description": "Sử dụng AI để phân tích và đưa ra các báo cáo, insight giúp tối ưu hiệu suất làm việc"
+    },
+    "smart_work": {
+      "title": "Quản lý công việc thông minh",
+      "description": "Dễ dàng giao việc, theo dõi tiến độ và đảm bảo deadline cho đội nhóm làm việc hiệu quả"
+    },
+    "project_progress": {
+      "title": "Báo cáo tiến độ dự án",
+      "description": "Theo dõi tiến độ dự án theo thời gian thực, tạo báo cáo chi tiết và trực quan"
+    }
+  },
+
+  "features": {
+    "title": "TÍNH NĂNG NỔI BẬT",
+    "description": "Khám phá những tính năng mạnh mẽ giúp tối ưu hóa quy trình làm việc của bạn",
+    "project_progress": {
+      "title": "Báo cáo tiến độ dự án",
+      "description": "Cập nhật tiến độ dự án theo thời gian thực với gợi ý và phân tích của trí tuệ nhân tạo"
+    },
+    "smart_work": {
+      "title": "Quản lý công việc thông minh",
+      "description": "Tạo, phân công và theo dõi task dễ dàng"
+    },
+    "focus_mode": {
+      "title": "Chế độ tập trung",
+      "description": "Các chế độ làm việc - nghỉ ngắt quãng, nhắc nhở nghỉ ngơi và cân bằng sức khỏe."
+    },
+    "performance_report": {
+      "title": "Báo cáo hiệu suất với AI",
+      "description": "Tự động phân tích dữ liệu công việc và báo cáo theo ngày/tuần/tháng."
+    },
+    "file_storage": {
+      "title": "Lưu trữ file",
+      "description": "Cho phép tải lên và lưu trữ file để chia sẻ với đồng nghiệp thuận tiện và nhanh chóng"
+    },
+    "team_management": {
+      "title": "Quản lý đội nhóm",
+      "description": "Giao diện quản lý đội nhóm trực quan giúp nhà quản trị dễ dàng theo dõi đội nhóm"
+    }
+  },
+
+  "action_contact_now": {
+    "title": "Đăng ký tư vấn ngay với FLOWPILOT",
+    "description": "Trở thành một trong những khách hàng đầu tiên của chúng tôi!",
+    "sliding_btn": "Đang chuyển đến trang báo giá...",
+    "btn": "Trượt để tư vấn ngay →"
+  },
+
+  "footer": {
+    "companyDescription1": "Nền tảng quản lý hiệu suất",
+    "companyDescription2": "nhân sự từ xa",
+    "resources": {
+      "title": "Tài nguyên",
+      "blog": "Blog",
+      "faq": "Câu hỏi thường gặp",
+      "guides": "Hướng dẫn"
+    },
+    "support": {
+      "title": "Hỗ trợ",
+      "helpCenter": "Trung tâm hỗ trợ",
+      "privacyPolicy": "Chính sách bảo mật",
+      "termsOfService": "Điều khoản dịch vụ"
+    }
+  },
+
+  "contact": {
+    "title": "Liên hệ với chúng tôi",
+    "description": "Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn. Hãy liên hệ với chúng tôi qua các kênh dưới đây!",
+    "information": "Thông Tin Liên Hệ",
+    "phone": "Điện Thoại",
+    "email": "Email",
+    "address": "Địa Chỉ"
+  },
+
+  "all_rights": "© 2025 FLOWPILOT. Tất cả quyền được bảo lưu.",
+  "rights_belongs_flowpilot": "Bản quyền thuộc FLOWPILOT",
+
+  "pricing": {
+    "loading": "Đang tải các gói...",
+    "error": "Có lỗi xảy ra khi tải dữ liệu",
+    "period": "tháng",
+    "consultationError": "Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.",
+    "title": "BẢNG GIÁ",
+    "description": "Chọn gói phù hợp nhất",
+    "limitedUsers": "Người dùng giới hạn",
+    "unlimitedUsers": "Không giới hạn người dùng",
+    "startingFrom": "Chỉ từ",
+    "packageDescriptions": {
+      "TEAM": "Gói cho đội ngũ nhỏ",
+      "GROWTH": "Gói mở rộng cho tăng trưởng",
+      "ENTERPRISE": "Gói dành cho doanh nghiệp lớn"
+    },
+    "packageFeatures": {
+      "maxMembers10": "Tối đa 10 thành viên",
+      "maxMembers30": "Tối đa 30 thành viên",
+      "maxMembers50": "50 thành viên (có thể mở rộng thêm)",
+      "hrManagement": "Quản lý hồ sơ nhân sự, nghỉ phép, chấm công",
+      "focusMode": "Chế độ Tập trung",
+      "basicReports": "Báo cáo hiệu suất cơ bản (tuần/tháng)",
+      "emailSupport": "Hỗ trợ qua email",
+      "allTeamFeatures": "Toàn bộ tính năng trong Team",
+      "allGrowthFeatures": "Toàn bộ tính năng trong Growth",
+      "aiReports": "Báo cáo AI về hiệu suất & năng suất làm việc",
+      "realTimeDashboard": "Bảng điều khiển theo thời gian thực",
+      "performance360": "Đánh giá hiệu suất 360° & phản hồi đa chiều",
+      "customKPI": "Tùy chỉnh KPI & mục tiêu nhóm",
+      "autoReports": "Báo cáo tự động (tuần/tháng/quý)",
+      "prioritySupport": "Hỗ trợ ưu tiên",
+      "advancedAI": "Phân tích AI nâng cao: dự báo hiệu suất, phát hiện nguy cơ nghỉ việc",
+      "hrAutomation": "Tự động hóa quy trình nhân sự (nhắc nhở, phê duyệt, onboarding)",
+      "customReports": "Báo cáo tùy biến theo nhu cầu doanh nghiệp",
+      "dedicatedSupport": "Hỗ trợ riêng",
+      "advancedSecurity": "Bảo mật nâng cao (SSO, phân quyền truy cập chi tiết)"
+    }
+  },
+
+  "consultationModal": {
+    "title": "Đăng ký tư vấn - ",
+    "name": {
+      "label": "Họ tên",
+      "placeholder": "Nhập họ tên của bạn",
+      "required": "Họ tên là bắt buộc",
+      "minLength": "Họ tên phải có ít nhất 2 ký tự"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "Nhập địa chỉ email",
+      "required": "Email là bắt buộc",
+      "invalid": "Email không hợp lệ"
+    },
+    "phone": {
+      "label": "Số điện thoại",
+      "placeholder": "Nhập số điện thoại",
+      "required": "Số điện thoại là bắt buộc",
+      "invalid": "Số điện thoại không đúng định dạng Việt Nam"
+    },
+    "companyName": {
+      "label": "Tên công ty",
+      "placeholder": "Nhập tên công ty (tùy chọn)"
+    },
+    "note": {
+      "label": "Ghi chú",
+      "placeholder": "Nhập ghi chú hoặc yêu cầu đặc biệt (tùy chọn)"
+    },
+    "buttons": {
+      "cancel": "Hủy",
+      "submit": "Gửi yêu cầu",
+      "submitting": "Đang gửi..."
+    },
+    "success": {
+      "title": "Gửi yêu cầu thành công!",
+      "message": "Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất."
+    },
+    "error": "Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại."
+  }
+}

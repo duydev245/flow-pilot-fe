@@ -6,6 +6,7 @@ import { Label } from '@/app/components/ui/label'
 import { Textarea } from '@/app/components/ui/textarea'
 import { guestApi } from '@/app/apis/AUTH/guest.api'
 import * as yup from 'yup'
+import { useTranslation } from 'react-i18next'
 
 interface ConsultationModalProps {
   isOpen: boolean
@@ -30,15 +31,15 @@ interface FormErrors {
   note?: string
 }
 
-// Yup validation schema
-const consultationSchema = yup.object().shape({
-  name: yup.string().trim().required('Họ tên là bắt buộc').min(2, 'Họ tên phải có ít nhất 2 ký tự'),
-  email: yup.string().trim().required('Email là bắt buộc').email('Email không hợp lệ'),
+// Create validation schema with i18n support
+const createConsultationSchema = (t: any) => yup.object().shape({
+  name: yup.string().trim().required(t('consultationModal.name.required')).min(2, t('consultationModal.name.minLength')),
+  email: yup.string().trim().required(t('consultationModal.email.required')).email(t('consultationModal.email.invalid')),
   phone: yup
     .string()
     .trim()
-    .required('Số điện thoại là bắt buộc')
-    .test('vietnam-phone', 'Số điện thoại không đúng định dạng Việt Nam', function (value) {
+    .required(t('consultationModal.phone.required'))
+    .test('vietnam-phone', t('consultationModal.phone.invalid'), function (value) {
       if (!value) return false
       // Loại bỏ khoảng trắng, gạch và dấu ngoặc
       const cleanPhone = value.replace(/[\s\-()]/g, '')
@@ -53,6 +54,7 @@ const consultationSchema = yup.object().shape({
 })
 
 export function ConsultationModal({ isOpen, onClose, packageId, packageName }: ConsultationModalProps) {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -67,6 +69,7 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
 
   const validateForm = async (): Promise<FormErrors> => {
     try {
+      const consultationSchema = createConsultationSchema(t)
       await consultationSchema.validate(formData, { abortEarly: false })
       return {}
     } catch (error) {
@@ -125,7 +128,7 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
       }, 2000)
     } catch (error: any) {
       console.error('Error submitting consultation request:', error)
-      alert('Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại.')
+      alert(t('consultationModal.error'))
     } finally {
       setIsSubmitting(false)
     }
@@ -156,8 +159,8 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
               </svg>
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 mb-2'>Gửi yêu cầu thành công!</h3>
-            <p className='text-gray-600'>Chúng tôi sẽ liên hệ với bạn trong thời gian sớm nhất.</p>
+            <h3 className='text-lg font-semibold text-gray-900 mb-2'>{t('consultationModal.success.title')}</h3>
+            <p className='text-gray-600'>{t('consultationModal.success.message')}</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -168,21 +171,21 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className='sm:max-w-lg max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>Đăng ký tư vấn - {packageName}</DialogTitle>
+          <DialogTitle>{t('consultationModal.title')}{packageName}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className='space-y-4 pt-2'>
           {/* Name */}
           <div className='space-y-1'>
             <Label htmlFor='name'>
-              Họ tên <span className='text-red-500'>*</span>
+              {t('consultationModal.name.label')} <span className='text-red-500'>*</span>
             </Label>
             <Input
               id='name'
               type='text'
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder='Nhập họ tên của bạn'
+              placeholder={t('consultationModal.name.placeholder')}
               className={errors.name ? 'border-red-500' : ''}
             />
             {errors.name && <p className='text-sm text-red-500'>{errors.name}</p>}
@@ -191,14 +194,14 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
           {/* Email */}
           <div className='space-y-1'>
             <Label htmlFor='email'>
-              Email <span className='text-red-500'>*</span>
+              {t('consultationModal.email.label')} <span className='text-red-500'>*</span>
             </Label>
             <Input
               id='email'
               type='email'
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder='Nhập địa chỉ email'
+              placeholder={t('consultationModal.email.placeholder')}
               className={errors.email ? 'border-red-500' : ''}
             />
             {errors.email && <p className='text-sm text-red-500'>{errors.email}</p>}
@@ -207,14 +210,14 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
           {/* Phone */}
           <div className='space-y-1'>
             <Label htmlFor='phone'>
-              Số điện thoại <span className='text-red-500'>*</span>
+              {t('consultationModal.phone.label')} <span className='text-red-500'>*</span>
             </Label>
             <Input
               id='phone'
               type='tel'
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder='Nhập số điện thoại'
+              placeholder={t('consultationModal.phone.placeholder')}
               className={errors.phone ? 'border-red-500' : ''}
             />
             {errors.phone && <p className='text-sm text-red-500'>{errors.phone}</p>}
@@ -222,24 +225,24 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
 
           {/* Company Name */}
           <div className='space-y-1'>
-            <Label htmlFor='company_name'>Tên công ty</Label>
+            <Label htmlFor='company_name'>{t('consultationModal.companyName.label')}</Label>
             <Input
               id='company_name'
               type='text'
               value={formData.company_name}
               onChange={(e) => handleInputChange('company_name', e.target.value)}
-              placeholder='Nhập tên công ty (tùy chọn)'
+              placeholder={t('consultationModal.companyName.placeholder')}
             />
           </div>
 
           {/* Note */}
           <div className='space-y-1'>
-            <Label htmlFor='note'>Ghi chú</Label>
+            <Label htmlFor='note'>{t('consultationModal.note.label')}</Label>
             <Textarea
               id='note'
               value={formData.note}
               onChange={(e) => handleInputChange('note', e.target.value)}
-              placeholder='Nhập ghi chú hoặc yêu cầu đặc biệt (tùy chọn)'
+              placeholder={t('consultationModal.note.placeholder')}
               rows={3}
             />
           </div>
@@ -247,14 +250,14 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
           {/* Buttons */}
           <div className='flex gap-3 pt-4'>
             <Button type='button' variant='outline' onClick={handleClose} className='flex-1' disabled={isSubmitting}>
-              Hủy
+              {t('consultationModal.buttons.cancel')}
             </Button>
             <Button
               type='submit'
               className='flex-1 bg-gradient-to-r from-pink-500 via-purple-600 to-blue-500 text-white hover:scale-105 transition-transform'
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
+              {isSubmitting ? t('consultationModal.buttons.submitting') : t('consultationModal.buttons.submit')}
             </Button>
           </div>
         </form>
