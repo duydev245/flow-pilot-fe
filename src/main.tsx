@@ -9,6 +9,7 @@ import { Provider } from 'react-redux'
 import store from './app/redux/store.ts'
 import { SocketProvider } from './app/components/Notification/hooks/SocketProvider.tsx'
 import { TimerProvider } from './app/providers'
+import './i18n.js'
 
 const queryClient = new QueryClient({
   defaultOptions: {

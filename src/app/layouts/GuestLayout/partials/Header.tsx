@@ -1,21 +1,31 @@
 import logoFlowpilot from '@/app/assets/LogoFlowPilot2.png'
 import { PATH } from '@/app/routes/path'
-
 import { Menu } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
 
+  const { i18n, t } = useTranslation()
+
+  const toggleLang = () => {
+    const newLang = i18n.language === 'en' ? 'vi' : 'en'
+    console.log("🚀 ~ toggleLang ~ i18n.language:", i18n.language)
+    i18n.changeLanguage(newLang)
+    localStorage.setItem('i18nextLng', newLang)
+  }
+
   const mainMenu = (
     <ul className='flex flex-col lg:flex-row list-none text-black gap-3 lg:gap-5'>
       <li>
         <Link to={PATH.HOME} onClick={() => setMobileMenuOpen(false)}>
           <button className='w-full lg:w-auto flex items-center gap-1 text-sm lg:text-base font-normal rounded-xl transition-all duration-300 ease-in-out border border-transparent hover:border-gray-100 hover:bg-gray-100 hover:scale-105 px-3 lg:px-[12px] py-2 lg:py-[10px]'>
-            Trang chủ
+            {t('homeTitle')}
           </button>
         </Link>
       </li>
@@ -39,27 +49,27 @@ const Header = () => {
           }}
           className='w-full lg:w-auto flex items-center gap-1 text-sm lg:text-base font-normal rounded-xl transition-all duration-300 ease-in-out border border-transparent hover:border-gray-100 hover:bg-gray-100 hover:scale-105 px-3 lg:px-[12px] py-2 lg:py-[10px]'
         >
-          Giới thiệu
+          {t('introductionTitle')}
         </button>
       </li>
       <li>
         <Link to={PATH.PRICING_PAGE} onClick={() => setMobileMenuOpen(false)}>
           <button className='w-full lg:w-auto flex items-center gap-1 text-sm lg:text-base font-normal rounded-xl transition-all duration-300 ease-in-out border border-transparent hover:border-gray-100 hover:bg-gray-100 hover:scale-105 px-3 lg:px-[12px] py-2 lg:py-[10px]'>
-            Bảng giá
+            {t('pricingTitle')}
           </button>
         </Link>
       </li>
       <li>
         <Link to={PATH.CONTACT_PAGE} onClick={() => setMobileMenuOpen(false)}>
           <button className='w-full lg:w-auto flex items-center gap-1 text-sm lg:text-base font-normal rounded-xl transition-all duration-300 ease-in-out border border-transparent hover:border-gray-100 hover:bg-gray-100 hover:scale-105 px-3 lg:px-[12px] py-2 lg:py-[10px]'>
-            Liên hệ
+            {t('contactTitle')}
           </button>
         </Link>
       </li>
       <li className='lg:hidden mt-2 pt-3 border-t border-gray-200'>
         <Link to='/auth/login' onClick={() => setMobileMenuOpen(false)}>
           <button className='w-full flex items-center justify-center gap-1 text-base font-medium rounded-xl transition-all duration-300 ease-in-out bg-gradient-to-r from-pink-500 via-purple-600 to-blue-500 text-white hover:shadow-lg hover:scale-105 px-4 py-3'>
-            Đăng nhập
+            {t('logIn')}
           </button>
         </Link>
       </li>
@@ -87,9 +97,16 @@ const Header = () => {
         <div className='Navbar-main-menu hidden lg:flex flex-1 justify-center mx-4'>{mainMenu}</div>
 
         <div className='Navbar-account-menu flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0'>
+          <button
+            className='md:flex hover:underline font-bold text-gray-400 mr-2'
+            onClick={toggleLang}
+          >
+            {i18n.language === "en" ? "🇻🇳 VIE" : "🇺🇸 EN"}
+          </button>
+          
           <Link to='/auth/login' className='hidden lg:block'>
             <button className='text-base font-medium px-[30px] py-[8px] bg-gradient-to-r from-pink-500 via-purple-600 to-blue-500 text-white rounded-md hover:scale-105 hover:shadow-lg transition-all duration-300 ease-in-out whitespace-nowrap'>
-              Đăng nhập
+              {t('logIn')}
             </button>
           </Link>
 

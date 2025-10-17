@@ -4,42 +4,44 @@ import focusMode from '@/app/assets/focus-mode.png'
 import aiAnalysis from '@/app/assets/ai-analysis.png'
 import fileUpload from '@/app/assets/file-upload.png'
 import teamManagement from '@/app/assets/team-management.png'
+import { useTranslation } from 'react-i18next'
 
 const FeatureSection = () => {
+  const { t } = useTranslation()
   const features = [
     {
-      title: 'Báo cáo tiến độ dự án',
-      description: 'Cập nhật tiến độ dự án theo thời gian thực với gợi ý và phân tích của trí tuệ nhân tạo',
+      title: t('features.project_progress.title'),
+      description: t('features.project_progress.description'),
       image: projectDashboard,
       imagePosition: 'left'
     },
     {
-      title: 'Quản lý công việc thông minh',
-      description: 'Tạo, phân công và theo dõi task dễ dàng',
+      title: t('features.smart_work.title'),
+      description: t('features.smart_work.description'),
       image: kanban,
       imagePosition: 'right'
     },
     {
-      title: 'Chế độ tập trung',
-      description: 'Các chế độ làm việc - nghỉ ngắt quãng, nhắc nhở nghỉ ngơi và cân bằng sức khỏe.',
+      title: t('features.focus_mode.title'),
+      description: t('features.focus_mode.description'),
       image: focusMode,
       imagePosition: 'left'
     },
     {
-      title: 'Báo cáo hiệu suất với AI',
-      description: 'Tự động phân tích dữ liệu công việc và báo cáo theo ngày/tuần/tháng.',
+      title: t('features.performance_report.title'),
+      description: t('features.performance_report.description'),
       image: aiAnalysis,
       imagePosition: 'right'
     },
     {
-      title: 'Lưu trữ file',
-      description: 'Cho phép tải lên và lưu trữ file để chia sẻ với đồng nghiệp thuận tiện và nhanh chóng',
+      title: t('features.file_storage.title'),
+      description: t('features.file_storage.description'),
       image: fileUpload,
       imagePosition: 'left'
     },
     {
-      title: 'Quản lý đội nhóm',
-      description: 'Giao diện quản lý đội nhóm trực quan giúp nhà quản trị dễ dàng theo dõi đội nhóm',
+      title: t('features.team_management.title'),
+      description: t('features.team_management.description'),
       image: teamManagement,
       imagePosition: 'right'
     }
@@ -54,10 +56,10 @@ const FeatureSection = () => {
             className='text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-gray-900 mb-4 sm:mb-6'
             style={{ fontWeight: 900 }}
           >
-            TÍNH NĂNG NỔI BẬT
+            {t('features.title')}
           </h2>
           <p className='text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed'>
-            Khám phá những tính năng mạnh mẽ giúp tối ưu hóa quy trình làm việc của bạn
+            {t('features.description')}
           </p>
         </div>
 

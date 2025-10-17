@@ -1,32 +1,34 @@
 import { UserCheck, Brain, KanbanSquare, FileBarChart } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const AboutSection = () => {
+  const { t } = useTranslation()
   const features = [
     {
       icon: <UserCheck className='w-8 h-8' />,
-      title: 'Quản lý nhân sự hiệu quả',
-      description: 'Theo dõi và đánh giá hiệu suất làm việc của từng thành viên một cách chi tiết và chính xác',
+      title: t('about.effective.title'),
+      description: t('about.effective.description'),
       color: 'from-blue-400 to-cyan-400',
       bgColor: 'bg-blue-50',
     },
     {
       icon: <Brain className='w-8 h-8' />,
-      title: 'Phân tích dữ liệu thông minh',
-      description: 'Sử dụng AI để phân tích và đưa ra các báo cáo, insight giúp tối ưu hiệu suất làm việc',
+      title: t('about.smart_data.title'),
+      description: t('about.smart_data.description'),
       color: 'from-green-400 to-teal-400',
       bgColor: 'bg-green-50',
     },
     {
       icon: <KanbanSquare className='w-8 h-8' />,
-      title: 'Quản lý công việc thông minh',
-      description: 'Dễ dàng giao việc, theo dõi tiến độ và đảm bảo deadline cho đội nhóm làm việc hiệu quả',
+      title: t('about.smart_work.title'),
+      description: t('about.smart_work.description'),
       color: 'from-purple-400 to-pink-400',
       bgColor: 'bg-purple-50',
     },
     {
       icon: <FileBarChart className='w-8 h-8' />,
-      title: 'Báo cáo tiến độ dự án',
-      description: 'Theo dõi tiến độ dự án theo thời gian thực, tạo báo cáo chi tiết và trực quan',
+      title: t('about.project_progress.title'),
+      description: t('about.project_progress.description'),
       color: 'from-orange-400 to-red-400',
       bgColor: 'bg-orange-50',
     },
@@ -38,12 +40,11 @@ const AboutSection = () => {
         {/* Header */}
         <div className='text-center mb-12 sm:mb-16 lg:mb-20 animate-fade-in'>
           <h2 className='text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-gray-900 mb-4 sm:mb-6' style={{ fontWeight: 900 }}>
-            TẠI SAO CHỌN
+            {t('about.title')}
             <span className='bg-gradient-to-r from-pink-500 via-purple-600 to-blue-500 bg-clip-text text-transparent'> FLOWPILOT</span>?
           </h2>
           <p className='text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed'>
-            Nền tảng quản lý hiệu suất nhân sự toàn diện, giúp doanh nghiệp tối ưu hóa 
-            năng suất làm việc từ xa với công nghệ AI tiên tiến
+            {t('about.description')}
           </p>
         </div>
 

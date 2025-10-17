@@ -1,10 +1,12 @@
 import logo from '@/app/assets/LogoFlowPilot2.png'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { PATH } from '@/app/routes/path'
+import { useTranslation } from 'react-i18next'
 
 const Footer = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   return (
     <footer className='w-full bg-white border-t border-gray-200 pt-10 pb-4 px-4 sm:px-6 md:px-8 lg:px-0'>
@@ -16,9 +18,7 @@ const Footer = () => {
             <span className='text-3xl font-semibold text-gray-900'>FLOWPILOT</span>
           </div>
           <div className='text-gray-700 text-base mt-2'>
-            Nền tảng quản lý hiệu suất
-            <br />
-            nhân sự từ xa
+            {t('footer.companyDescription1')} <br /> {t('footer.companyDescription2')}
           </div>
           <div className='flex gap-4 mt-4'>
             <a
@@ -66,7 +66,7 @@ const Footer = () => {
             <ul className='space-y-2 text-gray-700 text-sm'>
               <li>
                 <Link to={PATH.HOME} className='hover:underline transition-all duration-200 hover:text-gray-900'>
-                  Trang chủ
+                  {t('homeTitle')}
                 </Link>
               </li>
               <li>
@@ -88,7 +88,7 @@ const Footer = () => {
                   }}
                   className='hover:underline transition-all duration-200 hover:text-gray-900'
                 >
-                  Giới thiệu
+                  {t('introductionTitle')}
                 </button>
               </li>
               <li>
@@ -96,7 +96,7 @@ const Footer = () => {
                   to={PATH.PRICING_PAGE}
                   className='hover:underline transition-all duration-200 hover:text-gray-900'
                 >
-                  Bảng giá
+                  {t('pricingTitle')}
                 </Link>
               </li>
               <li>
@@ -104,47 +104,47 @@ const Footer = () => {
                   to={PATH.CONTACT_PAGE}
                   className='hover:underline transition-all duration-200 hover:text-gray-900'
                 >
-                  Liên hệ
+                  {t('contactTitle')}
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className='font-semibold text-gray-900 mb-3'>Tài nguyên</h4>
+            <h4 className='font-semibold text-gray-900 mb-3'>{t('footer.resources.title')}</h4>
             <ul className='space-y-2 text-gray-700 text-sm'>
               <li>
                 <a href='#' className='hover:underline transition-all duration-200 hover:text-gray-900'>
-                  Blog
+                  {t('footer.resources.blog')}
                 </a>
               </li>
               <li>
                 <a href='#' className='hover:underline transition-all duration-200 hover:text-gray-900'>
-                  Hướng dẫn
+                  {t('footer.resources.guides')}
                 </a>
               </li>
               <li>
                 <a href='#' className='hover:underline transition-all duration-200 hover:text-gray-900'>
-                  Câu hỏi thường gặp
+                  {t('footer.resources.faq')}
                 </a>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className='font-semibold text-gray-900 mb-3'>Hỗ trợ</h4>
+            <h4 className='font-semibold text-gray-900 mb-3'>{t('footer.support.title')}</h4>
             <ul className='space-y-2 text-gray-700 text-sm'>
               <li>
                 <a href='#' className='hover:underline transition-all duration-200 hover:text-gray-900'>
-                  Trung tâm hỗ trợ
+                  {t('footer.support.helpCenter')}
                 </a>
               </li>
               <li>
                 <a href='#' className='hover:underline transition-all duration-200 hover:text-gray-900'>
-                  Điều khoản dịch vụ
+                  {t('footer.support.termsOfService')}
                 </a>
               </li>
               <li>
                 <a href='#' className='hover:underline transition-all duration-200 hover:text-gray-900'>
-                  Chính sách bảo mật
+                  {t('footer.support.privacyPolicy')}
                 </a>
               </li>
             </ul>
@@ -155,7 +155,7 @@ const Footer = () => {
       {/* Bottom */}
       <div className='max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center mt-8 border-t border-gray-200 pt-4 gap-4 px-2 sm:px-0'>
         <div className='text-xs text-gray-500 text-center sm:text-left'>
-          © 2025 FLOWPILOT. Tất cả quyền được bảo lưu.
+          {t('all_rights')}
         </div>
       </div>
     </footer>
