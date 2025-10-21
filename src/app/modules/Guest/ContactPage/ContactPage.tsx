@@ -1,14 +1,16 @@
 import { Mail, Phone, MapPin, Facebook } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const ContactPage = () => {
+  const { t } = useTranslation()
   return (
     <div className='min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 py-12 px-4 sm:px-6 lg:px-8'>
       <div className='max-w-7xl mx-auto'>
         {/* Header */}
         <div className='text-center mb-12'>
-          <h1 className='text-4xl sm:text-5xl lg:text-6xl font-black mb-4'>Liên Hệ Với Chúng Tôi</h1>
+          <h1 className='text-4xl sm:text-5xl lg:text-6xl font-black mb-4'>{t('contact.title')}</h1>
           <p className='text-lg text-gray-600 max-w-2xl mx-auto'>
-            Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn. Hãy liên hệ với chúng tôi qua các kênh dưới đây!
+            {t('contact.description')}
           </p>
         </div>
 
@@ -17,7 +19,7 @@ const ContactPage = () => {
           {/* Left Section - Contact Info */}
           <div className='order-1 lg:order-1'>
             <div className='bg-white rounded-3xl shadow-2xl p-8 sm:p-10 lg:p-12 h-full'>
-              <h2 className='text-3xl sm:text-4xl font-bold text-gray-800 mb-8'>Thông Tin Liên Hệ</h2>
+              <h2 className='text-3xl sm:text-4xl font-bold text-gray-800 mb-8'>{t('contact.information')}</h2>
 
               {/* Contact Items */}
               <div className='space-y-8'>
@@ -49,7 +51,7 @@ const ContactPage = () => {
                     </div>
                   </div>
                   <div>
-                    <h3 className='text-lg font-semibold text-gray-800 mb-2'>Điện Thoại</h3>
+                    <h3 className='text-lg font-semibold text-gray-800 mb-2'>{t('contact.phone')}</h3>
                     <a
                       href='tel:+840987693153'
                       className='text-xl text-purple-600 hover:text-purple-800 transition-colors'
@@ -67,7 +69,7 @@ const ContactPage = () => {
                     </div>
                   </div>
                   <div>
-                    <h3 className='text-lg font-semibold text-gray-800 mb-2'>Email</h3>
+                    <h3 className='text-lg font-semibold text-gray-800 mb-2'>{t('contact.email')}</h3>
                     <a
                       href='mailto:flowpilot.hrm@gmail.com'
                       className='text-xl text-purple-600 hover:text-purple-800 transition-colors break-all'
@@ -85,7 +87,7 @@ const ContactPage = () => {
                     </div>
                   </div>
                   <div>
-                    <h3 className='text-lg font-semibold text-gray-800 mb-2'>Địa Chỉ</h3>
+                    <h3 className='text-lg font-semibold text-gray-800 mb-2'>{t('contact.address')}</h3>
                     <p className='text-lg text-gray-700 leading-relaxed'>
                       Lot E2a-7, D1 Street, Saigon Hi-Tech Park, Tang Nhon Phu Ward, Ho Chi Minh City, Vietnam
                     </p>
@@ -98,8 +100,8 @@ const ContactPage = () => {
 
               {/* Copyright */}
               <div className='text-center'>
-                <p className='text-gray-500 text-sm'>© {new Date().getFullYear()} FLOWPILOT. All rights reserved.</p>
-                <p className='text-gray-400 text-xs mt-2'>Bản quyền thuộc FLOWPILOT</p>
+                <p className='text-gray-500 text-sm'>{t('all_rights')}</p>
+                <p className='text-gray-400 text-xs mt-2'>{t('rights_belongs_flowpilot')}</p>
               </div>
             </div>
           </div>

@@ -1,0 +1,177 @@
+{
+  "homeTitle": "Home",
+  "introductionTitle": "About",
+  "pricingTitle": "Pricing",
+  "contactTitle": "Contact",
+  "logIn": "Log in",
+  "contactUsBtn": "Get Consultation",
+
+  "hero": {
+    "title": "REMOTE EMPLOYEE PERFORMANCE MANAGEMENT PLATFORM"
+  },
+
+  "about": {
+    "title": "WHY CHOOSE",
+    "description": "A comprehensive employee performance management platform that helps businesses optimize remote productivity with advanced AI technology",
+    "effective": {
+      "title": "Efficient Employee Management",
+      "description": "Track and evaluate each team member’s performance in detail and with accuracy"
+    },
+    "smart_data": {
+      "title": "Smart Data Analytics",
+      "description": "Use AI to analyze data and generate insights and reports to optimize productivity"
+    },
+    "smart_work": {
+      "title": "Intelligent Task Management",
+      "description": "Easily assign, monitor progress, and ensure deadlines are met for efficient teamwork"
+    },
+    "project_progress": {
+      "title": "Project Progress Reports",
+      "description": "Monitor project progress in real time and generate detailed, visualized reports"
+    }
+  },
+
+  "features": {
+    "title": "KEY FEATURES",
+    "description": "Explore powerful features that help optimize your workflow",
+    "project_progress": {
+      "title": "Project Progress Reports",
+      "description": "Update project progress in real time with AI-driven insights and recommendations"
+    },
+    "smart_work": {
+      "title": "Intelligent Task Management",
+      "description": "Create, assign, and track tasks easily"
+    },
+    "focus_mode": {
+      "title": "Focus Mode",
+      "description": "Work-rest intervals, health balance reminders, and focus-enhancing settings"
+    },
+    "performance_report": {
+      "title": "AI-Powered Performance Reports",
+      "description": "Automatically analyze work data and generate daily/weekly/monthly performance reports"
+    },
+    "file_storage": {
+      "title": "File Storage",
+      "description": "Upload and store files for quick and convenient sharing with teammates"
+    },
+    "team_management": {
+      "title": "Team Management",
+      "description": "A visual interface that allows managers to easily track and manage their teams"
+    }
+  },
+
+  "action_contact_now": {
+    "title": "Register for consultation now with FLOWPILOT",
+    "description": "Become one of our first valued clients!",
+    "sliding_btn": "Redirecting to pricing page...",
+    "btn": "Slide to get consultation →"
+  },
+
+  "footer": {
+    "companyDescription1": "Remote employee performance",
+    "companyDescription2": "management platform",
+    "resources": {
+      "title": "Resources",
+      "blog": "Blog",
+      "faq": "FAQ",
+      "guides": "Guides"
+    },
+    "support": {
+      "title": "Support",
+      "helpCenter": "Help Center",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service"
+    }
+  },
+
+  "contact": {
+    "title": "Contact Us",
+    "description": "We’re always ready to listen and assist you. Reach out to us through the following channels!",
+    "information": "Contact Information",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address"
+  },
+
+  "all_rights": "© 2025 FLOWPILOT. All rights reserved.",
+  "rights_belongs_flowpilot": "Copyright belongs to FLOWPILOT",
+
+  "pricing": {
+    "loading": "Loading packages...",
+    "error": "Failed to load packages",
+    "period": "month",
+    "consultationError": "An error occurred while sending the request. Please try again.",
+    "title": "PRICING",
+    "description": "Choose the plan that suits you best",
+    "limitedUsers": "Limited users",
+    "unlimitedUsers": "Unlimited users",
+    "startingFrom": "From",
+    "packageDescriptions": {
+      "TEAM": "For small teams",
+      "GROWTH": "Expansion package for growth",
+      "ENTERPRISE": "For large enterprises"
+    },
+    "packageFeatures": {
+      "maxMembers10": "Up to 10 members",
+      "maxMembers30": "Up to 30 members",
+      "maxMembers50": "50 members (expandable)",
+      "hrManagement": "HR profile management, leave, attendance",
+      "focusMode": "Focus Mode",
+      "basicReports": "Basic performance reports (weekly/monthly)",
+      "emailSupport": "Email support",
+      "allTeamFeatures": "All features in Team",
+      "allGrowthFeatures": "All features in Growth",
+      "aiReports": "AI reports on performance & productivity",
+      "realTimeDashboard": "Real-time dashboard",
+      "performance360": "360° performance evaluation & multi-directional feedback",
+      "customKPI": "Custom KPI & team goals",
+      "autoReports": "Automatic reports (weekly/monthly/quarterly)",
+      "prioritySupport": "Priority support",
+      "advancedAI": "Advanced AI analytics: performance prediction, turnover risk detection",
+      "hrAutomation": "HR process automation (reminders, approvals, onboarding)",
+      "customReports": "Custom reports for business needs",
+      "dedicatedSupport": "Dedicated support",
+      "advancedSecurity": "Advanced security (SSO, detailed access control)"
+    }
+  },
+
+  "consultationModal": {
+    "title": "Register for consultation - ",
+    "name": {
+      "label": "Full Name",
+      "placeholder": "Enter your full name",
+      "required": "Full name is required",
+      "minLength": "Full name must be at least 2 characters"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "Enter your email address",
+      "required": "Email is required",
+      "invalid": "Invalid email format"
+    },
+    "phone": {
+      "label": "Phone Number",
+      "placeholder": "Enter your phone number",
+      "required": "Phone number is required",
+      "invalid": "Invalid Vietnamese phone number format"
+    },
+    "companyName": {
+      "label": "Company Name",
+      "placeholder": "Enter company name (optional)"
+    },
+    "note": {
+      "label": "Note",
+      "placeholder": "Enter notes or special requests (optional)"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "submit": "Send Request",
+      "submitting": "Sending..."
+    },
+    "success": {
+      "title": "Request sent successfully!",
+      "message": "We will contact you as soon as possible."
+    },
+    "error": "An error occurred while sending the request. Please try again."
+  }
+}
