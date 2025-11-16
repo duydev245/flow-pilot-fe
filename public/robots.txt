@@ -1,0 +1,21 @@
+# robots.txt for https://flowpilot.io.vn
+# Controls what search engines can crawl
+
+User-agent: *
+# Allow the whole site by default
+Allow: /
+
+# Disallow admin and app-internal areas
+Disallow: /super-admin
+Disallow: /admin-ws
+Disallow: /emp
+
+# Disallow sensitive auth flows from indexing
+Disallow: /auth/forgot-password
+Disallow: /auth/reset-password
+
+# Optional: keep 404/403 out of the index
+Disallow: /403
+Disallow: /404
+
+Sitemap: https://flowpilot.io.vn/sitemap.xml
