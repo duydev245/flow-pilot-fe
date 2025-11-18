@@ -119,13 +119,13 @@ export function KanbanBoardForm() {
     })
   )
 
-  // Fetch tasks from API
   useEffect(() => {
     const fetchTasks = async () => {
       try {
         setLoading(true)
         setError(null)
-        const response = await MyTaskApi.getMyTask()
+        // Use the same task API as Manager (call /task endpoints)
+        const response = await MyTaskApi.getAllTasksByManager()
 
         if (response.success && response.data) {
           // Group tasks by column based on status mapping
@@ -162,7 +162,6 @@ export function KanbanBoardForm() {
             }
           })
 
-          // Update columns with tasks
           setColumns((prevColumns) =>
             prevColumns.map((column) => ({
               ...column,
@@ -240,7 +239,7 @@ export function KanbanBoardForm() {
     const activeCardId = active.id as string
     const overColumnId = over.id as TaskStatus
     if (!activeCardId || !overColumnId) return
-    if(overColumnId === 'rejected') {
+    if (overColumnId === 'rejected') {
       toast.error('You cannot move tasks directly to the Rejected column.')
       return
     }

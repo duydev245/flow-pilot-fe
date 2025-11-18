@@ -37,7 +37,6 @@ export function CreateEmployeeModal({ isOpen, onClose, onCreate }: CreateEmploye
 
     // Convert role string to role_id
     const roleMap: { [key: string]: number } = {
-      'Super Admin': 1,
       'Admin': 2,
       'Project Manager': 3,
       'Employee': 4
@@ -111,7 +110,6 @@ export function CreateEmployeeModal({ isOpen, onClose, onCreate }: CreateEmploye
                 <SelectValue placeholder='Select role' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='Super Admin'>Super Admin</SelectItem>
                 <SelectItem value='Admin'>Admin</SelectItem>
                 <SelectItem value='Project Manager'>Project Manager</SelectItem>
                 <SelectItem value='Employee'>Employee</SelectItem>

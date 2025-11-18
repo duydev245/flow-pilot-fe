@@ -58,6 +58,14 @@ const ProjectsDisplay = ({ projectUsers }: { projectUsers: ApiEmployee['projectU
   )
 }
 
+// Function to format role display
+const formatRole = (role: string) => {
+  if (role === 'PROJECTMANAGER') {
+    return 'PROJECT MANAGER'
+  }
+  return role
+}
+
 function MyEmployees() {
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -396,7 +404,7 @@ function MyEmployees() {
                       </Link>
                     </TableCell>
                     <TableCell className='text-gray-600'>{employee.email}</TableCell>
-                    <TableCell className='text-gray-600'>{employee.role?.role || 'Employee'}</TableCell>
+                    <TableCell className='text-gray-600'>{formatRole(employee.role?.role || 'Employee')}</TableCell>
                     <TableCell className='text-gray-600'>{employee.department?.name || 'Products'}</TableCell>
                     <TableCell className='text-gray-600'>
                       <ProjectsDisplay projectUsers={employee.projectUsers} />

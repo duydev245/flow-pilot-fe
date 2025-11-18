@@ -61,6 +61,19 @@ function MyTeam() {
     }
   }
 
+  const formatSystemRole = (role: string) => {
+    switch (role.toUpperCase()) {
+      case 'PROJECTMANAGER':
+        return 'Project Manager'
+      case 'EMPLOYEE':
+        return 'Employee'
+      case 'ADMIN':
+        return 'Admin'
+      default:
+        return role
+    }
+  }
+
   // Check if user has project assigned
   if (!hasProject) {
     return (
@@ -152,7 +165,7 @@ function MyTeam() {
                       <Badge className={getRoleBadgeColor(member.role)}>{member.role}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getSystemRoleBadgeColor(member.user.role.role)}>{member.user.role.role}</Badge>
+                      <Badge className={getSystemRoleBadgeColor(member.user.role.role)}>{formatSystemRole(member.user.role.role)}</Badge>
                     </TableCell>
                     <TableCell>{member.user.department?.name}</TableCell>
                   </TableRow>

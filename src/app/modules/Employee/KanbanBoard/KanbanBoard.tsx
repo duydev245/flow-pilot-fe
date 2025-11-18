@@ -6,7 +6,4 @@ function KanbanBoard() {
 
 export default KanbanBoard
 
-/**
- * NOTE
- * Phân quyền sử dụng các function cho role teamleader và staff
- */
+
