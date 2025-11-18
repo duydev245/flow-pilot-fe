@@ -10,6 +10,7 @@ import type { IUserStatePayload } from '@/app/models'
 import { getLocalStorage } from '@/app/utils'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useQuery } from '@tanstack/react-query'
+import { X } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
@@ -20,7 +21,12 @@ const taskSchema = yup.object({
   project_id: yup.string().required('Project ID is required'),
   name: yup.string().required('Task name is required').min(2, 'Task name must be at least 2 characters'),
   description: yup.string().notRequired(),
-  start_at: yup.string().required('Start date is required'),
+  start_at: yup.string().required('Start date is required').test('not-past', 'Start date cannot be in the past', function (value) {
+    if (!value) return true
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return new Date(value) >= today
+  }),
   due_at: yup
     .string()
     .required('Due date is required')
@@ -28,6 +34,12 @@ const taskSchema = yup.object({
       const { start_at } = this.parent
       if (!value || !start_at) return true
       return new Date(value) > new Date(start_at)
+    })
+    .test('not-past', 'Due date cannot be in the past', function (value) {
+      if (!value) return true
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return new Date(value) >= today
     }),
   time_spent_in_minutes: yup.number().min(0, 'Time spent cannot be negative').default(0),
   priority: yup.string().oneOf(['low', 'medium', 'high'], 'Invalid priority').required('Priority is required'),
@@ -59,6 +71,7 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [selectedMembers, setSelectedMembers] = useState<string[]>([])
+  const [selectedAttachments, setSelectedAttachments] = useState<File[]>([])
   const userLocalStorage: IUserStatePayload = getLocalStorage('user')
   const projectId = userLocalStorage.projectId
 
@@ -117,20 +130,39 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
       const response = await MyTaskApi.createTask(submitData)
 
       if (response.success) {
+        const taskId = response.data?.id
+
+        // Upload attachments if any
+        if (selectedAttachments.length > 0 && taskId) {
+          try {
+            for (const file of selectedAttachments) {
+              await MyTaskApi.uploadFileByTaskId(taskId, file)
+            }
+            toast.success('Task created and attachments uploaded successfully!')
+          } catch (uploadError) {
+            console.error('Error uploading attachments:', uploadError)
+            toast.warning('Task created but failed to upload some attachments')
+          }
+        }
+
         // If task created successfully and members are selected, assign task
-        if (selectedMembers.length > 0 && response.data?.id) {
+        if (selectedMembers.length > 0 && taskId) {
           try {
             await MyTaskApi.assignTask({
-              task_id: response.data.id,
+              task_id: taskId,
               user_ids: selectedMembers
             })
-            toast.success('Task created and assigned successfully!')
+            if (selectedAttachments.length === 0) {
+              toast.success('Task created and assigned successfully!')
+            }
           } catch (assignError) {
             console.error('Error assigning task:', assignError)
             toast.warning('Task created but failed to assign to members')
           }
         } else {
-          toast.success('Task created successfully!')
+          if (selectedAttachments.length === 0) {
+            toast.success('Task created successfully!')
+          }
         }
 
         onSuccess?.()
@@ -138,6 +170,8 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
         reset()
         setSelectedImage(null)
         setSelectedMembers([])
+        setSelectedAttachments([])
+        setSelectedAttachments([])
       }
     } catch (error: any) {
       console.error('Error creating task:', error)
@@ -155,6 +189,13 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
     }
   }
 
+  const handleAttachmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files) {
+      setSelectedAttachments(Array.from(files))
+    }
+  }
+
   const handleMemberToggle = (memberId: string, checked: boolean) => {
     if (checked) {
       setSelectedMembers((prev) => [...prev, memberId])
@@ -165,8 +206,17 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
 
   return (
     <Card className='w-full max-w-2xl mx-auto'>
-      <CardHeader>
+      <CardHeader className='flex flex-row items-center justify-between'>
         <CardTitle>Create New Task</CardTitle>
+        <Button
+          type='button'
+          variant='ghost'
+          size='sm'
+          onClick={onCancel}
+          className='h-8 w-8 p-0'
+        >
+          <X className='h-4 w-4' />
+        </Button>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
@@ -220,7 +270,7 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
               <Controller
                 name='start_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' {...field} />}
+                render={({ field }) => <Input type='datetime-local' min={new Date().toISOString().slice(0, 16)} {...field} />}
               />
               {errors.start_at && <p className='text-sm text-red-500 mt-1'>{errors.start_at.message}</p>}
             </div>
@@ -229,7 +279,7 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
               <Controller
                 name='due_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' {...field} />}
+                render={({ field }) => <Input type='datetime-local' min={new Date().toISOString().slice(0, 16)} {...field} />}
               />
               {errors.due_at && <p className='text-sm text-red-500 mt-1'>{errors.due_at.message}</p>}
             </div>
@@ -290,6 +340,21 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
             <label className='block text-sm font-medium mb-2'>Task Image File</label>
             <Input type='file' accept='image/*' onChange={handleImageChange} className='mb-2' />
             {selectedImage && <p className='text-sm text-gray-600'>Selected: {selectedImage.name}</p>}
+          </div>
+
+          <div>
+            <label className='block text-sm font-medium mb-2'>Task Attachments</label>
+            <Input type='file' multiple onChange={handleAttachmentChange} className='mb-2' />
+            {selectedAttachments.length > 0 && (
+              <div className='text-sm text-gray-600'>
+                <p>Selected {selectedAttachments.length} file(s):</p>
+                <ul className='list-disc list-inside'>
+                  {selectedAttachments.map((file, index) => (
+                    <li key={index}>{file.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className='flex justify-end space-x-2 pt-4'>
