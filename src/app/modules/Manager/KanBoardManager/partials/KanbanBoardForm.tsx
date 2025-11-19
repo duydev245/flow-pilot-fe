@@ -403,6 +403,8 @@ export function KanbanBoardForm() {
     try {
       await MyTaskApi.updateTaskStatus(activeCardId, newTaskStatus)
       console.log(`Task ${activeCardId} status updated to ${newTaskStatus}`)
+      // Fetch tasks again to get the latest data
+      await fetchTasks()
     } catch (error) {
       console.error('Failed to update task status:', error)
 
