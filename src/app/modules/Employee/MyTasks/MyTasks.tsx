@@ -5,7 +5,6 @@ import { MyTaskApi } from '@/app/apis/AUTH/task-emp.api'
 import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
-import { Separator } from '@/app/components/ui/separator'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,24 +12,23 @@ import {
   DropdownMenuTrigger
 } from '@/app/components/ui/dropdown-menu'
 import { Input } from '@/app/components/ui/input'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/app/components/ui/tooltip'
+import { Separator } from '@/app/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/app/components/ui/tooltip'
 import {
   ArrowDownWideNarrow,
   Calendar,
-  CircleDotDashed,
+  ChevronDown,
   ClipboardList,
   Download,
   ListFilter,
   Loader2,
   MessageSquare,
   Paperclip,
-  Plus,
   Search,
   Star,
   Tag,
   Upload,
-  User,
-  ChevronDown
+  User
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FileByTask, MyTask } from './models/myTask.type'
@@ -352,11 +350,7 @@ export default function MyTasksPage() {
 
   const selectedTaskData = tasks.find((task) => task.id === selectedTask)
 
-  const activityLog = [
-    { type: 'create', user: 'System', action: 'Task created', time: '2024-07-24 06:00 AM' },
-    { type: 'status', user: 'Alice Johnson', action: 'Status changed to In Progress', time: '2024-07-24 06:36 AM' },
-    { type: 'comment', user: 'Bob Miller', action: 'Added a comment', time: '2024-07-25 10:30 AM' }
-  ]
+
 
   if (loading) {
     return (
