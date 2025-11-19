@@ -6,7 +6,15 @@ import type { AxiosError, AxiosResponse } from 'axios'
 export const MyTaskApi = {
   getMyTask: async () => {
     try {
-      const response: AxiosResponse<MyTaskResponse> = await fetcher.get('/task/my-tasks')
+      // Get projectId from localStorage or Redux store
+      const user = localStorage.getItem('user')
+      const projectId = user ? JSON.parse(user).projectId : null;
+
+      if (!projectId) {
+        throw new Error('No project selected. Please select a project first.')
+      }
+
+      const response: AxiosResponse<MyTaskResponse> = await fetcher.get(`/task/my-tasks/${projectId}`)
       return response.data as MyTaskResponse
     } catch (error) {
       const axiosError = error as AxiosError
