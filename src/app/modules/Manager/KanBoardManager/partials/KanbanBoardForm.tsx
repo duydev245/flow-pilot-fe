@@ -161,8 +161,10 @@ export function KanbanBoardForm() {
           // Map task status to kanban columns
           switch (task.status) {
             case 'todo':
-            case 'overdued':
               tasksByColumn.todo.push(card)
+              break
+            case 'overdued':
+              tasksByColumn.doing.push(card)
               break
             case 'doing':
               tasksByColumn.doing.push(card)

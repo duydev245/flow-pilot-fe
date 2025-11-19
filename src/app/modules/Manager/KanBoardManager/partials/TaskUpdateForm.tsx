@@ -17,12 +17,7 @@ const taskUpdateSchema = yup.object({
   project_id: yup.string().required('Project ID is required'),
   name: yup.string().required('Task name is required').min(2, 'Task name must be at least 2 characters'),
   description: yup.string().notRequired(),
-  start_at: yup.string().required('Start date is required').test('not-past', 'Start date cannot be in the past', function (value) {
-    if (!value) return true
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return new Date(value) >= today
-  }),
+  start_at: yup.string().required('Start date is required'),
   due_at: yup
     .string()
     .required('Due date is required')
@@ -37,7 +32,6 @@ const taskUpdateSchema = yup.object({
       today.setHours(0, 0, 0, 0)
       return new Date(value) >= today
     }),
-  time_spent_in_minutes: yup.number().min(0, 'Time spent cannot be negative').default(0),
   priority: yup.string().oneOf(['low', 'medium', 'high'], 'Invalid priority').required('Priority is required'),
   status: yup
     .string()
@@ -52,7 +46,6 @@ type TaskUpdateFormData = {
   description?: string
   start_at: string
   due_at: string
-  time_spent_in_minutes: number
   priority: 'low' | 'medium' | 'high'
   status: 'todo' | 'doing' | 'reviewing' | 'rejected' | 'completed' | 'feedbacked' | 'overdued'
   image_url?: string
@@ -85,7 +78,6 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
       description: task.description || '',
       start_at: task.start_at ? new Date(task.start_at).toISOString().slice(0, 16) : '',
       due_at: task.due_at ? new Date(task.due_at).toISOString().slice(0, 16) : '',
-      time_spent_in_minutes: task.time_spent_in_minutes || 0,
       priority: task.priority as 'low' | 'medium' | 'high',
       status: task.status,
       image_url: task.image_url || ''
@@ -101,6 +93,15 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
         description: data.description,
         start_at: new Date(data.start_at).toISOString(),
         due_at: new Date(data.due_at).toISOString(),
+        // Calculate time spent: (due date - start date) * 8 hours in minutes
+        time_spent_in_minutes: (() => {
+          const startDate = new Date(data.start_at)
+          const dueDate = new Date(data.due_at)
+          const diffMs = dueDate.getTime() - startDate.getTime()
+          const diffHours = diffMs / (1000 * 60 * 60)
+          const timeSpentHours = diffHours * 8
+          return Math.round(timeSpentHours * 60)
+        })(),
         priority: data.priority,
         status: data.status
       }
@@ -211,31 +212,6 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
             {errors.description && <p className='text-sm text-red-500 mt-1'>{errors.description.message}</p>}
           </div>
 
-          {/* Time Spent */}
-          <div>
-            <label className='block text-sm font-medium mb-1'>Time Spent (minutes)</label>
-            <Controller
-              name='time_spent_in_minutes'
-              control={control}
-              render={({ field }) => (
-                <Input
-                  type='number'
-                  min={0}
-                  value={field.value === 0 ? '' : field.value}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    const parsed = value === '' ? 0 : parseInt(value)
-                    field.onChange(parsed)
-                  }}
-                  placeholder='Enter time spent in minutes'
-                />
-              )}
-            />
-            {errors.time_spent_in_minutes && (
-              <p className='text-sm text-red-500 mt-1'>{errors.time_spent_in_minutes.message}</p>
-            )}
-          </div>
-
           {/* Dates */}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
@@ -243,7 +219,7 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
               <Controller
                 name='start_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' min={new Date().toISOString().slice(0, 16)} disabled={isTaskFinalized} {...field} />}
+                render={({ field }) => <Input type='datetime-local' disabled={isTaskFinalized} {...field} />}
               />
               {errors.start_at && <p className='text-sm text-red-500 mt-1'>{errors.start_at.message}</p>}
             </div>

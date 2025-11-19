@@ -13,11 +13,9 @@ import {
 } from '@/app/components/ui/dropdown-menu'
 import { Input } from '@/app/components/ui/input'
 import { Separator } from '@/app/components/ui/separator'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/app/components/ui/tooltip'
 import {
   ArrowDownWideNarrow,
   Calendar,
-  ChevronDown,
   ClipboardList,
   Download,
   ListFilter,
@@ -86,7 +84,7 @@ const getStatusStyles = (status: string) => {
         statusColor: 'bg-red-800',
         statusBorder: 'border-red-800',
         statusBg: 'bg-red-100',
-        displayText: 'Overdue'
+        displayText: 'Overdued'
       }
     default:
       return {
@@ -393,7 +391,7 @@ export default function MyTasksPage() {
                   <DropdownMenuItem onClick={() => setStatusFilter('completed')}>Completed</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setStatusFilter('rejected')}>Rejected</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setStatusFilter('feedbacked')}>Feedback</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter('overdued')}>Overdue</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter('overdued')}>Overdued</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <DropdownMenu>
@@ -492,8 +490,46 @@ export default function MyTasksPage() {
           {selectedTaskData && (
             <div className='p-6'>
               <div className='mb-6'>
-                <h1 className='text-2xl font-semibold text-gray-900'>{selectedTaskData.name}</h1>
-                <p className='text-2xl font-semibold text-gray-900 mb-4'>(Deadline Approaching)</p>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <h1 className='text-2xl font-semibold text-gray-900'>{selectedTaskData.name}</h1>
+                    {selectedTaskData.status !== 'reviewing' &&
+                     selectedTaskData.status !== 'completed' &&
+                     selectedTaskData.status !== 'feedbacked' &&
+                     selectedTaskData.status !== 'rejected' && (
+                      <p className='text-2xl font-semibold text-red-600 mb-4'>(Deadline Approaching)</p>
+                    )}
+                  </div>
+                  <div className='flex gap-2'>
+                    {selectedTaskData.status === 'todo' && (
+                      <Button
+                        size='sm'
+                        onClick={() => handleUpdateStatus(selectedTaskData.id, 'doing')}
+                        className='bg-blue-600 text-white hover:bg-blue-700'
+                      >
+                        Mark as Doing
+                      </Button>
+                    )}
+                    {selectedTaskData.status === 'overdued' && (
+                      <Button
+                        size='sm'
+                        onClick={() => handleUpdateStatus(selectedTaskData.id, 'reviewing')}
+                        className='bg-green-600 text-white hover:bg-green-700'
+                      >
+                        Mark as Complete
+                      </Button>
+                    )}
+                    {selectedTaskData.status === 'doing' && (
+                      <Button
+                        size='sm'
+                        onClick={() => handleUpdateStatus(selectedTaskData.id, 'reviewing')}
+                        className='bg-green-600 text-white hover:bg-green-700'
+                      >
+                        Mark as Completed
+                      </Button>
+                    )}
+                  </div>
+                </div>
                 <p className='text-gray-700 leading-relaxed mb-4'>
                   {selectedTaskData.description || 'No description available'}
                 </p>
@@ -523,36 +559,11 @@ export default function MyTasksPage() {
                     <div className='flex items-center space-x-2'>
                       <Tag className='w-4 h-4 text-blue-700' />
                       <span className='text-sm font-semibold'>Status:</span>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <div className='flex items-center space-x-1 cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5 transition-colors'>
-                                <Badge
-                                  className={`${getStatusStyles(selectedTaskData.status).statusColor} text-white text-xs rounded-2xl px-2 py-1`}
-                                >
-                                  {getStatusStyles(selectedTaskData.status).displayText}
-                                </Badge>
-                                <ChevronDown className='w-3 h-3 text-gray-500' />
-                              </div>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='start'>
-                              <DropdownMenuItem onClick={() => handleUpdateStatus(selectedTaskData.id, 'todo')}>
-                                To Do
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateStatus(selectedTaskData.id, 'doing')}>
-                                In Progress
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleUpdateStatus(selectedTaskData.id, 'reviewing')}>
-                                Reviewing
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Click to change status</p>
-                        </TooltipContent>
-                      </Tooltip>
+                      <Badge
+                        className={`${getStatusStyles(selectedTaskData.status).statusColor} text-white text-xs rounded-2xl px-2 py-1`}
+                      >
+                        {getStatusStyles(selectedTaskData.status).displayText}
+                      </Badge>
                     </div>
                   </div>
                   <div className='flex flex-col gap-2'>
@@ -595,7 +606,12 @@ export default function MyTasksPage() {
                       ))}
                   </div>
 
-                  <AddChecklistItem taskId={selectedTaskData.id} onSuccess={refreshTasks} />
+                  {selectedTaskData.status !== 'reviewing' &&
+                   selectedTaskData.status !== 'completed' &&
+                   selectedTaskData.status !== 'feedbacked' &&
+                   selectedTaskData.status !== 'rejected' && (
+                    <AddChecklistItem taskId={selectedTaskData.id} onSuccess={refreshTasks} />
+                  )}
                 </div>
 
 
@@ -623,12 +639,17 @@ export default function MyTasksPage() {
 
                   <Separator className='my-6' />
 
-                  <CreateTaskContentForm
-                    taskId={selectedTaskData.id}
-                    userId={currentUserId}
-                    type='comment'
-                    onSuccess={refreshTasks}
-                  />
+                  {selectedTaskData.status !== 'reviewing' &&
+                   selectedTaskData.status !== 'completed' &&
+                   selectedTaskData.status !== 'feedbacked' &&
+                   selectedTaskData.status !== 'rejected' && (
+                    <CreateTaskContentForm
+                      taskId={selectedTaskData.id}
+                      userId={currentUserId}
+                      type='comment'
+                      onSuccess={refreshTasks}
+                    />
+                  )}
                 </div>
 
                 <Separator className='my-6' />
@@ -655,14 +676,19 @@ export default function MyTasksPage() {
                   <Separator className='my-6' />
 
                   {/* Add Note Form */}
-                  <CreateTaskContentForm
-                    taskId={selectedTaskData.id}
-                    userId={currentUserId}
-                    type='note'
-                    onSuccess={refreshTasks}
-                    placeholder='Add a note...'
-                    buttonText='Add Note'
-                  />
+                  {selectedTaskData.status !== 'reviewing' &&
+                   selectedTaskData.status !== 'completed' &&
+                   selectedTaskData.status !== 'feedbacked' &&
+                   selectedTaskData.status !== 'rejected' && (
+                    <CreateTaskContentForm
+                      taskId={selectedTaskData.id}
+                      userId={currentUserId}
+                      type='note'
+                      onSuccess={refreshTasks}
+                      placeholder='Add a note...'
+                      buttonText='Add Note'
+                    />
+                  )}
                 </div>
 
                 <Separator className='my-6' />
@@ -711,25 +737,30 @@ export default function MyTasksPage() {
                       onChange={handleFileUpload}
                       disabled={uploadingFile}
                     />
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      className='w-full mt-2'
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingFile}
-                    >
-                      {uploadingFile ? (
-                        <>
-                          <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className='w-4 h-4 mr-2' />
-                          Upload Attachment
-                        </>
-                      )}
-                    </Button>
+                    {selectedTaskData.status !== 'reviewing' &&
+                     selectedTaskData.status !== 'completed' &&
+                     selectedTaskData.status !== 'feedbacked' &&
+                     selectedTaskData.status !== 'rejected' && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        className='w-full mt-2'
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingFile}
+                      >
+                        {uploadingFile ? (
+                          <>
+                            <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className='w-4 h-4 mr-2' />
+                            Upload Attachment
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

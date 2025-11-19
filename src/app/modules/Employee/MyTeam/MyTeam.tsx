@@ -1,6 +1,9 @@
 import { projectApi } from '@/app/apis/AUTH/project.api'
+import { getUserInfo } from '@/app/apis/AUTH/user.api'
 import { Badge } from '@/app/components/ui/badge'
+import { Button } from '@/app/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table'
 import type { IUserStatePayload } from '@/app/models'
 import type { ITeamMember } from '@/app/modules/Manager/MyTeamManager/models/TeamInterface'
@@ -11,6 +14,8 @@ import { useEffect, useState } from 'react'
 function MyTeam() {
   const [projectId, setProjectId] = useState<string>('')
   const [hasProject, setHasProject] = useState<boolean>(true)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
 
   useEffect(() => {
     const userLocalStorage: IUserStatePayload = getLocalStorage('user')
@@ -30,6 +35,16 @@ function MyTeam() {
     queryKey: ['project', projectId],
     queryFn: () => projectApi.getProjectById(projectId),
     enabled: !!projectId
+  })
+
+  const {
+    data: userDetail,
+    isLoading: isUserDetailLoading,
+    error: userDetailError
+  } = useQuery({
+    queryKey: ['userInfo', selectedUserId],
+    queryFn: () => getUserInfo(selectedUserId!),
+    enabled: !!selectedUserId && isDialogOpen
   })
 
   const members = projectData?.data?.members || []
@@ -137,6 +152,7 @@ function MyTeam() {
                   <TableHead>Project Role</TableHead>
                   <TableHead>System Role</TableHead>
                   <TableHead>Department</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -168,6 +184,18 @@ function MyTeam() {
                       <Badge className={getSystemRoleBadgeColor(member.user.role.role)}>{formatSystemRole(member.user.role.role)}</Badge>
                     </TableCell>
                     <TableCell>{member.user.department?.name}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUserId(member.user.id)
+                          setIsDialogOpen(true)
+                        }}
+                      >
+                        View Details
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -175,6 +203,68 @@ function MyTeam() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open)
+        if (!open) setSelectedUserId(null)
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+          </DialogHeader>
+          {isUserDetailLoading ? (
+            <div className='text-center py-4'>Loading user details...</div>
+          ) : userDetailError ? (
+            <div className='text-center py-4 text-red-500'>Error loading user details</div>
+          ) : userDetail?.data ? (
+            <div className='space-y-4'>
+              <div className='flex items-center space-x-4'>
+                <div className='w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center'>
+                  {userDetail.data.avatar_url ? (
+                    <img
+                      src={userDetail.data.avatar_url}
+                      alt={userDetail.data.name}
+                      className='w-16 h-16 rounded-full object-cover'
+                    />
+                  ) : (
+                    <span className='text-2xl font-medium text-gray-600'>
+                      {userDetail.data.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <h3 className='text-lg font-semibold'>{userDetail.data.name}</h3>
+                  <p className='text-gray-600'>{userDetail.data.email}</p>
+                </div>
+              </div>
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <label className='text-sm font-medium text-gray-700'>Phone</label>
+                  <p>{userDetail.data.phone || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className='text-sm font-medium text-gray-700'>Address</label>
+                  <p>{userDetail.data.address || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className='text-sm font-medium text-gray-700'>Bio</label>
+                  <p>{userDetail.data.bio || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className='text-sm font-medium text-gray-700'>Nickname</label>
+                  <p>{userDetail.data.nickname || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className='text-sm font-medium text-gray-700'>Status: </label>
+                  <Badge className={`text-xs px-2 py-1 ${userDetail.data.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {userDetail.data.status}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
