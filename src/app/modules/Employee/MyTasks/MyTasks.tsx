@@ -13,17 +13,17 @@ import {
 } from '@/app/components/ui/dropdown-menu'
 import { Input } from '@/app/components/ui/input'
 import { Separator } from '@/app/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/app/components/ui/tooltip'
 import {
   ArrowDownWideNarrow,
   Calendar,
-  CircleDotDashed,
+  ChevronDown,
   ClipboardList,
   Download,
   ListFilter,
   Loader2,
   MessageSquare,
   Paperclip,
-  Plus,
   Search,
   Star,
   Tag,
@@ -138,8 +138,8 @@ export default function MyTasksPage() {
   const [uploadingFile, setUploadingFile] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<string>('status')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [sortBy, setSortBy] = useState<string>('priority')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -189,6 +189,22 @@ export default function MyTasksPage() {
       }
     } catch (err) {
       console.error('Error refreshing tasks:', err)
+    }
+  }
+
+  const handleUpdateStatus = async (taskId: string, newStatus: string) => {
+    try {
+      await MyTaskApi.updateTaskStatus(taskId, newStatus)
+      await refreshTasks()
+      // Update selectedTaskData if it's the current selected task
+      if (selectedTask === taskId) {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus as MyTask['status'] } : task))
+        )
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+      alert('Failed to update task status')
     }
   }
 
@@ -334,11 +350,7 @@ export default function MyTasksPage() {
 
   const selectedTaskData = tasks.find((task) => task.id === selectedTask)
 
-  const activityLog = [
-    { type: 'create', user: 'System', action: 'Task created', time: '2024-07-24 06:00 AM' },
-    { type: 'status', user: 'Alice Johnson', action: 'Status changed to In Progress', time: '2024-07-24 06:36 AM' },
-    { type: 'comment', user: 'Bob Miller', action: 'Added a comment', time: '2024-07-25 10:30 AM' }
-  ]
+
 
   if (loading) {
     return (
@@ -442,6 +454,11 @@ export default function MyTasksPage() {
                       <Badge className={`${statusStyles.statusColor} text-white text-xs rounded-2xl px-2 py-1`}>
                         {statusStyles.displayText}
                       </Badge>
+                      <Badge
+                        className={`${getPriorityStyles(task.priority).priorityColor} text-xs rounded-2xl px-2 py-1`}
+                      >
+                        {getPriorityStyles(task.priority).displayText}
+                      </Badge>
                     </div>
                     <div className='flex items-center space-x-3'>
                       {task.contents.length > 0 && (
@@ -506,11 +523,36 @@ export default function MyTasksPage() {
                     <div className='flex items-center space-x-2'>
                       <Tag className='w-4 h-4 text-blue-700' />
                       <span className='text-sm font-semibold'>Status:</span>
-                      <Badge
-                        className={`${getStatusStyles(selectedTaskData.status).statusColor} text-white text-xs rounded-2xl px-2 py-1`}
-                      >
-                        {getStatusStyles(selectedTaskData.status).displayText}
-                      </Badge>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <div className='flex items-center space-x-1 cursor-pointer hover:bg-gray-50 rounded px-1 py-0.5 transition-colors'>
+                                <Badge
+                                  className={`${getStatusStyles(selectedTaskData.status).statusColor} text-white text-xs rounded-2xl px-2 py-1`}
+                                >
+                                  {getStatusStyles(selectedTaskData.status).displayText}
+                                </Badge>
+                                <ChevronDown className='w-3 h-3 text-gray-500' />
+                              </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='start'>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(selectedTaskData.id, 'todo')}>
+                                To Do
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(selectedTaskData.id, 'doing')}>
+                                In Progress
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(selectedTaskData.id, 'reviewing')}>
+                                Reviewing
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Click to change status</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                   <div className='flex flex-col gap-2'>
@@ -534,7 +576,6 @@ export default function MyTasksPage() {
 
                 <Separator className='my-6' />
 
-                {/* Checklist */}
                 <div className='mb-8'>
                   <h3 className='text-lg font-semibold text-gray-900 mb-4'>
                     Checklist (
@@ -557,31 +598,6 @@ export default function MyTasksPage() {
                   <AddChecklistItem taskId={selectedTaskData.id} onSuccess={refreshTasks} />
                 </div>
 
-                <Separator className='my-6' />
-
-                {/* Activity Log */}
-                <div className='mb-8'>
-                  <h3 className='text-lg font-semibold text-gray-900 mb-4'>Activity Log (3)</h3>
-                  <div className='space-y-3'>
-                    {activityLog.map((activity, index) => (
-                      <div key={index} className='flex items-center space-x-3'>
-                        <div className='flex items-center justify-center'>
-                          {activity.type === 'create' && <Plus className='w-5 h-5 text-blue-600' />}
-                          {activity.type === 'status' && <CircleDotDashed className='w-5 h-5 text-blue-600' />}
-                          {activity.type === 'comment' && <MessageSquare className='w-5 h-5 text-blue-600' />}
-                        </div>
-
-                        {/* nội dung + time cùng hàng */}
-                        <div className=' flex  items-center'>
-                          <p className='text-sm text-gray-900 mr-1'>
-                            <span className='font-medium'>{activity.user}</span> {activity.action}
-                          </p>
-                          <span className='text-xs text-gray-500'>{activity.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
 
                 <Separator className='my-6' />
 

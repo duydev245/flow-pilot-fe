@@ -32,6 +32,7 @@ export interface Card {
   comments: number
   avatars: string[]
   originalTask: MyTask
+  isMyTask: boolean
 }
 
 export interface Column {
@@ -78,7 +79,7 @@ const getPriorityColor = (priority: string): string => {
 }
 
 // Helper function to convert MyTask to Card
-const convertTaskToCard = (task: MyTask): Card => {
+const convertTaskToCard = (task: MyTask, isMyTask: boolean): Card => {
   const tags: Tag[] = [
     {
       label: task.priority.charAt(0).toUpperCase() + task.priority.slice(1),
@@ -94,7 +95,8 @@ const convertTaskToCard = (task: MyTask): Card => {
     subtasks: task.checklists.length,
     comments: task.contents.length,
     avatars: task.assignees.map((assignee) => assignee.user.avatar_url || '/placeholder.svg'),
-    originalTask: task
+    originalTask: task,
+    isMyTask
   }
 }
 
@@ -119,16 +121,22 @@ export function KanbanBoardForm() {
     })
   )
 
-  // Fetch tasks from API
   useEffect(() => {
     const fetchTasks = async () => {
       try {
         setLoading(true)
         setError(null)
-        const response = await MyTaskApi.getMyTask()
+        // Fetch my tasks and all tasks
+        const [myTasksResponse, allTasksResponse] = await Promise.all([
+          MyTaskApi.getMyTask(),
+          MyTaskApi.getAllTasksByManager()
+        ])
 
-        if (response.success && response.data) {
-          // Group tasks by column based on status mapping
+        if (myTasksResponse.success && myTasksResponse.data && allTasksResponse.success && allTasksResponse.data) {
+          // Create a set of my task IDs for quick lookup
+          const myTaskIds = new Set(myTasksResponse.data.map(task => task.id))
+
+          // Group all tasks by column based on status mapping
           const tasksByColumn: Record<string, Card[]> = {
             todo: [],
             doing: [],
@@ -136,8 +144,9 @@ export function KanbanBoardForm() {
             rejected: []
           }
 
-          response.data.forEach((task) => {
-            const card = convertTaskToCard(task)
+          allTasksResponse.data.forEach((task) => {
+            const isMyTask = myTaskIds.has(task.id)
+            const card = convertTaskToCard(task, isMyTask)
 
             // Map task status to kanban columns
             switch (task.status) {
@@ -162,7 +171,6 @@ export function KanbanBoardForm() {
             }
           })
 
-          // Update columns with tasks
           setColumns((prevColumns) =>
             prevColumns.map((column) => ({
               ...column,
@@ -240,7 +248,7 @@ export function KanbanBoardForm() {
     const activeCardId = active.id as string
     const overColumnId = over.id as TaskStatus
     if (!activeCardId || !overColumnId) return
-    if(overColumnId === 'rejected') {
+    if (overColumnId === 'rejected') {
       toast.error('You cannot move tasks directly to the Rejected column.')
       return
     }

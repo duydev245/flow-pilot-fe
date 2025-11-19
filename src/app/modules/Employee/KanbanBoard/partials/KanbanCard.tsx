@@ -19,6 +19,7 @@ interface KanbanCardProps {
   comments: number
   avatars: string[]
   originalTask: MyTask
+  isMyTask?: boolean
   onViewDetail?: () => void
 }
 
@@ -40,11 +41,12 @@ export function KanbanCard({
   comments,
   avatars,
   originalTask,
+  isMyTask,
   onViewDetail
 }: KanbanCardProps) {
-  // Check if task can be dragged (not feedbacked or rejected or completed)
+  // Check if task can be dragged (not feedbacked or rejected or completed, and must be my task if specified)
   const isDragDisabled =
-    originalTask.status === 'feedbacked' || originalTask.status === 'rejected' || originalTask.status === 'completed' || originalTask.status === 'reviewing'
+    originalTask.status === 'feedbacked' || originalTask.status === 'rejected' || originalTask.status === 'completed' || originalTask.status === 'reviewing' || (isMyTask !== undefined && !isMyTask)
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: id,
@@ -65,12 +67,11 @@ export function KanbanCard({
       {...(isDragDisabled ? {} : attributes)}
       className={`overflow-hidden border border-border bg-card p-0 shadow-sm transition-all relative ${
         isDragDisabled
-          ? 'opacity-75 cursor-not-allowed'
+          ? 'opacity-60 cursor-not-allowed bg-gray-200 border-gray-300'
           : isDragging
             ? 'cursor-grabbing opacity-50'
             : 'cursor-grab hover:shadow-md'
-      } 
-       ${isDragDisabled ? 'bg-gray-50' : ''}`}
+      }`}
     >
       {image && (
         <div className='relative h-40 w-full bg-muted'>
