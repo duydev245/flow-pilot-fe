@@ -1,5 +1,5 @@
 import { FilterDialog } from '@/app/modules/Employee/KanbanBoard/partials/FilterDialog'
-import { KanbanCard } from '@/app/modules/Employee/KanbanBoard/partials/KanbanCard'
+import { ManagerKanbanCard } from './ManagerKanbanCard'
 import { SortDialog } from '@/app/modules/Employee/KanbanBoard/partials/SortDialog'
 import { TaskDetailModal } from './TaskDetailModal'
 import { TaskCreateForm } from './TaskCreateForm'
@@ -132,7 +132,7 @@ export function KanbanBoardForm() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8
+        distance: 3
       }
     })
   )
@@ -215,7 +215,7 @@ export function KanbanBoardForm() {
       }
 
       // Apply sorting
-      const sortedCards = [...filteredCards].sort((a, b) => {
+      let sortedCards = [...filteredCards].sort((a, b) => {
         let comparison = 0
         if (sortBy === 'title') {
           comparison = a.title.localeCompare(b.title)
@@ -226,6 +226,16 @@ export function KanbanBoardForm() {
         }
         return sortOrder === 'asc' ? comparison : -comparison
       })
+
+      // Special sorting for completed column: reviewing -> feedbacked -> completed
+      if (column.id === 'completed') {
+        const statusOrder = { reviewing: 1, feedbacked: 2, completed: 3 }
+        sortedCards = sortedCards.sort((a, b) => {
+          const aOrder = statusOrder[a.originalTask.status as keyof typeof statusOrder] || 999
+          const bOrder = statusOrder[b.originalTask.status as keyof typeof statusOrder] || 999
+          return aOrder - bOrder
+        })
+      }
 
       return { ...column, cards: sortedCards }
     })
@@ -290,11 +300,11 @@ export function KanbanBoardForm() {
 
     try {
       await MyTaskApi.deleteTask(selectedTaskForDelete.id)
-      
+
       // Close modal and reset state
       setDeleteTaskOpen(false)
       setSelectedTaskForDelete(null)
-      
+
       // Refresh tasks
       await fetchTasks()
       toast.success('Task deleted successfully')
@@ -321,14 +331,15 @@ export function KanbanBoardForm() {
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
+    const currentActiveCard = activeCard
     setActiveCard(null)
 
-    if (!over) return
+    if (!over || !currentActiveCard) return
 
     const activeCardId = active.id as string
     const overColumnId = over.id as TaskStatus
     if (!activeCardId || !overColumnId) return
-    if(overColumnId === 'rejected') {
+    if (overColumnId === 'rejected') {
       toast.error('You cannot move tasks directly to the Rejected column.')
       return
     }
@@ -428,8 +439,7 @@ export function KanbanBoardForm() {
         })
       })
 
-      // Show error message to user
-      alert('Failed to update task status. Please try again.')
+      toast.error('Failed to update task status. Please try again.')
     }
   }
 
@@ -561,13 +571,27 @@ export function KanbanBoardForm() {
             </div>
             <DragOverlay
               dropAnimation={{
-                duration: 200,
-                easing: 'ease-out'
+                duration: 300,
+                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
               }}
             >
               {activeCard ? (
-                <div className='transform scale-105 rotate-1 opacity-90 transition-all duration-200'>
-                  <KanbanCard {...activeCard} />
+                <div className='transform scale-105 rotate-2 opacity-95 transition-all duration-200 shadow-2xl border-2 border-blue-400 rounded-lg overflow-hidden'>
+                  <ManagerKanbanCard
+                    id={activeCard.id}
+                    image={activeCard.image}
+                    title={activeCard.title}
+                    tags={activeCard.tags}
+                    subtasks={activeCard.subtasks}
+                    comments={activeCard.comments}
+                    avatars={activeCard.avatars}
+                    originalTask={activeCard.originalTask}
+                    onViewDetail={() => {}}
+                    onReview={() => {}}
+                    onReject={() => {}}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                  />
                 </div>
               ) : null}
             </DragOverlay>

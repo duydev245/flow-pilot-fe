@@ -68,6 +68,8 @@ export function ManagerKanbanCard({
 
   const isReviewing = originalTask.status === 'reviewing'
   const isCanBeDeleted = originalTask.status === 'todo' || originalTask.status === 'overdued'
+  const isEditDisabled =
+    originalTask.status === 'reviewing' || originalTask.status === 'rejected' || originalTask.status === 'feedbacked'
   const taskOwnerId = originalTask.assignees[0]?.user?.id || ''
 
   return (
@@ -201,6 +203,7 @@ export function ManagerKanbanCard({
               size='sm'
               variant='outline'
               className='flex-1 h-7 text-xs'
+              disabled={isEditDisabled}
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit?.(id)
