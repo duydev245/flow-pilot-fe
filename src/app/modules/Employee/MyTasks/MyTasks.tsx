@@ -200,9 +200,9 @@ export default function MyTasksPage() {
       await refreshTasks()
       // Update selectedTaskData if it's the current selected task
       if (selectedTask === taskId) {
-        setTasks(prevTasks => prevTasks.map(task => 
-          task.id === taskId ? { ...task, status: newStatus as MyTask['status'] } : task
-        ))
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus as MyTask['status'] } : task))
+        )
       }
     } catch (error) {
       console.error('Error updating status:', error)
@@ -460,7 +460,9 @@ export default function MyTasksPage() {
                       <Badge className={`${statusStyles.statusColor} text-white text-xs rounded-2xl px-2 py-1`}>
                         {statusStyles.displayText}
                       </Badge>
-                      <Badge className={`${getPriorityStyles(task.priority).priorityColor} text-xs rounded-2xl px-2 py-1`}>
+                      <Badge
+                        className={`${getPriorityStyles(task.priority).priorityColor} text-xs rounded-2xl px-2 py-1`}
+                      >
                         {getPriorityStyles(task.priority).displayText}
                       </Badge>
                     </div>
@@ -580,7 +582,6 @@ export default function MyTasksPage() {
 
                 <Separator className='my-6' />
 
-                {/* Checklist */}
                 <div className='mb-8'>
                   <h3 className='text-lg font-semibold text-gray-900 mb-4'>
                     Checklist (
@@ -603,31 +604,6 @@ export default function MyTasksPage() {
                   <AddChecklistItem taskId={selectedTaskData.id} onSuccess={refreshTasks} />
                 </div>
 
-                <Separator className='my-6' />
-
-                {/* Activity Log */}
-                <div className='mb-8'>
-                  <h3 className='text-lg font-semibold text-gray-900 mb-4'>Activity Log (3)</h3>
-                  <div className='space-y-3'>
-                    {activityLog.map((activity, index) => (
-                      <div key={index} className='flex items-center space-x-3'>
-                        <div className='flex items-center justify-center'>
-                          {activity.type === 'create' && <Plus className='w-5 h-5 text-blue-600' />}
-                          {activity.type === 'status' && <CircleDotDashed className='w-5 h-5 text-blue-600' />}
-                          {activity.type === 'comment' && <MessageSquare className='w-5 h-5 text-blue-600' />}
-                        </div>
-
-                        {/* nội dung + time cùng hàng */}
-                        <div className=' flex  items-center'>
-                          <p className='text-sm text-gray-900 mr-1'>
-                            <span className='font-medium'>{activity.user}</span> {activity.action}
-                          </p>
-                          <span className='text-xs text-gray-500'>{activity.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
 
                 <Separator className='my-6' />
 

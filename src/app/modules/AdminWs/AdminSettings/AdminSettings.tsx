@@ -13,6 +13,16 @@ import { Badge } from '@/app/components/ui/badge'
 import { Edit, User, Upload, X } from 'lucide-react'
 import { setLocalStorage } from '@/app/utils'
 
+const roleDisplayMap: Record<string, string> = {
+  superadmin: 'Super Admin',
+  admin: 'Admin',
+  projectmanager: 'Project Manager',
+  'project manager': 'Project Manager',
+  PROJECTMANAGER: 'Project Manager',
+  employee: 'Employee',
+  EMPLOYEE: 'Employee'
+}
+
 interface FormData {
   name: string
   phone: string
@@ -408,7 +418,7 @@ function AdminSettings() {
               <div>
                 <p className='text-sm font-medium text-muted-foreground'>Role</p>
                 <Badge variant='secondary' className='mt-1'>
-                  {profile.role?.role || 'N/A'}
+                  {roleDisplayMap[(profile.role?.role || '').toLowerCase()] || (profile.role?.role || 'N/A')}
                 </Badge>
               </div>
               <div>
