@@ -21,12 +21,7 @@ const taskSchema = yup.object({
   project_id: yup.string().required('Project ID is required'),
   name: yup.string().required('Task name is required').min(2, 'Task name must be at least 2 characters'),
   description: yup.string().notRequired(),
-  start_at: yup.string().required('Start date is required').test('not-past', 'Start date cannot be in the past', function (value) {
-    if (!value) return true
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return new Date(value) >= today
-  }),
+  start_at: yup.string().required('Start date is required'),
   due_at: yup
     .string()
     .required('Due date is required')
@@ -41,7 +36,6 @@ const taskSchema = yup.object({
       today.setHours(0, 0, 0, 0)
       return new Date(value) >= today
     }),
-  time_spent_in_minutes: yup.number().min(0, 'Time spent cannot be negative').default(0),
   priority: yup.string().oneOf(['low', 'medium', 'high'], 'Invalid priority').required('Priority is required'),
   status: yup
     .string()
@@ -56,7 +50,6 @@ type TaskFormData = {
   description?: string
   start_at: string
   due_at: string
-  time_spent_in_minutes: number
   priority: 'low' | 'medium' | 'high'
   status: 'todo' | 'doing' | 'reviewing' | 'rejected' | 'completed' | 'feedbacked' | 'overdued'
   image_url?: string
@@ -97,7 +90,6 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
       description: '',
       start_at: '',
       due_at: '',
-      time_spent_in_minutes: 0,
       priority: 'medium',
       status: 'todo',
       image_url: ''
@@ -116,7 +108,16 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
       }
       submitData.append('start_at', new Date(data.start_at).toISOString())
       submitData.append('due_at', new Date(data.due_at).toISOString())
-      submitData.append('time_spent_in_minutes', data.time_spent_in_minutes.toString())
+
+      // Calculate time spent: (due date - start date) * 8 hours in minutes
+      const startDate = new Date(data.start_at)
+      const dueDate = new Date(data.due_at)
+      const diffMs = dueDate.getTime() - startDate.getTime()
+      const diffHours = diffMs / (1000 * 60 * 60)
+      const timeSpentHours = diffHours * 8
+      const timeSpentMinutes = Math.round(timeSpentHours * 60)
+      submitData.append('time_spent_in_minutes', timeSpentMinutes.toString())
+
       submitData.append('priority', data.priority)
       submitData.append('status', data.status)
       if (data.image_url) {
@@ -240,37 +241,13 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
             {errors.description && <p className='text-sm text-red-500 mt-1'>{errors.description.message}</p>}
           </div>
 
-          <div>
-            <label className='block text-sm font-medium mb-1'>Time Spent (minutes)</label>
-            <Controller
-              name='time_spent_in_minutes'
-              control={control}
-              render={({ field }) => (
-                <Input
-                  type='number'
-                  min={0}
-                  value={field.value === 0 ? '' : field.value}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    const parsed = value === '' ? 0 : parseInt(value)
-                    field.onChange(parsed)
-                  }}
-                  placeholder='Enter time spent in minutes'
-                />
-              )}
-            />
-            {errors.time_spent_in_minutes && (
-              <p className='text-sm text-red-500 mt-1'>{errors.time_spent_in_minutes.message}</p>
-            )}
-          </div>
-
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
               <label className='block text-sm font-medium mb-1'>Start Date *</label>
               <Controller
                 name='start_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' min={new Date().toISOString().slice(0, 16)} {...field} />}
+                render={({ field }) => <Input type='datetime-local' {...field} />}
               />
               {errors.start_at && <p className='text-sm text-red-500 mt-1'>{errors.start_at.message}</p>}
             </div>
