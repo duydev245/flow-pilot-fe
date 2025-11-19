@@ -28,7 +28,7 @@ export function ProjectMembersTable({ members }: ProjectMembersTableProps) {
   const filteredMembers = useMemo(() => {
     return members.filter((member) => {
       const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesRating = selectedRating === 'all' || member.avgQuality.toString() === selectedRating
+      const matchesRating = selectedRating === 'all' || member.avgQuality?.toString() === selectedRating
       const matchesJobTitle = selectedJobTitle === 'all' || member.job_title === selectedJobTitle
       const matchesStatus = selectedStatus === 'all' || member.status === selectedStatus
 
@@ -156,7 +156,7 @@ export function ProjectMembersTable({ members }: ProjectMembersTableProps) {
                   <TableCell className='text-center'>{member.assignedTasks}</TableCell>
                   <TableCell className='text-center'>{member.completedTasks}</TableCell>
                   <TableCell className='text-center'>{member.overdueTasks}</TableCell>
-                  <TableCell className='text-center'>{member.avgQuality.toFixed(1)}/5</TableCell>
+                  <TableCell className='text-center'>{member.avgQuality?.toFixed(1)}/5</TableCell>
                   <TableCell className='text-center'>
                     <div className='w-20 mx-auto'>
                       <Progress value={member.avgQuality * 20} className='h-2' />

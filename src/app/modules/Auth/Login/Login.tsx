@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import logoFlowpilot from '@/app/assets/LogoFlowPilot.png'
 import { Button } from '@/app/components/ui/button'
 import { Card, CardContent } from '@/app/components/ui/card'
@@ -39,8 +38,11 @@ function Login() {
   const { control, handleSubmit } = form
 
   const onSubmit: SubmitHandler<LoginForm> = (data) => {
-    loginMutation.mutate(data)
-
+    const payload = {
+      email: data.email.trim(),
+      password: data.password.trim()
+    }
+    loginMutation.mutate(payload)
   }
 
   return (

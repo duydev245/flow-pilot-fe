@@ -28,7 +28,7 @@ const TimerContext = createContext<TimerContextType | undefined>(undefined)
 export function TimerProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch()
   const timer = useSelector((state: RootState) => state.timer)
-  const { playBell } = useAudio()
+  const { playBell, stopBell } = useAudio()
   const [showAlert, setShowAlert] = useState(false)
 
   // Global timer countdown effect - runs on all pages
@@ -84,6 +84,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
   const handleContinueBreak = () => {
     setShowAlert(false)
+    stopBell()
     if (!timer.isBreakMode) {
       // Switch to break mode
       dispatch(setIsBreakMode(true))
@@ -103,6 +104,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
   const handleReset = () => {
     dispatch(resetTimer())
+    stopBell()
     setShowAlert(false)
   }
 

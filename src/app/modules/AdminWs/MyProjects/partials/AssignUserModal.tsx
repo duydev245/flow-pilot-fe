@@ -12,7 +12,7 @@ import { Input } from '@/app/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar'
 import { Badge } from '@/app/components/ui/badge'
-import { Search, X } from 'lucide-react'
+import { Search, X, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ProjectByAdminData } from '@/app/modules/AdminWs/MyProjects/models/project.type'
 import type { User } from '@/app/modules/SuperAdmin/UserManagement/models/UserManagementInterface'
@@ -38,17 +38,24 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
   const [selectedRole, setSelectedRole] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(false)
   const [isAssigning, setIsAssigning] = useState(false)
-
-  // Available roles for assignment (you can modify these based on your needs)
-  const availableRoles = [
-    { value: '4', label: 'Employee' },
-    { value: '3', label: 'Manager' },
-    { value: '2', label: 'Admin' }
-  ]
+  const [newRoleName, setNewRoleName] = useState('')
+  const [customRoles, setCustomRoles] = useState<string[]>([])
 
   // Get unique workspaces and roles
   const workspaces = Array.from(new Set(users.map(user => user.workspace?.name).filter(Boolean))).sort()
   const roles = Array.from(new Set(users.map(user => user.role?.role).filter(Boolean))).sort()
+
+  // Load custom roles from localStorage on component mount
+  useEffect(() => {
+    const savedRoles = localStorage.getItem('customRoles')
+    if (savedRoles) {
+      try {
+        setCustomRoles(JSON.parse(savedRoles))
+      } catch (error) {
+        console.error('Error parsing custom roles from localStorage:', error)
+      }
+    }
+  }, [])
 
   // Fetch users when modal opens
   useEffect(() => {
@@ -59,7 +66,7 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
 
   // Filter users based on search and filters
   useEffect(() => {
-    let filtered = users.filter(user => user.status === 'active')
+    let filtered = users.filter(user => user.status === 'active' && user.role?.role === 'EMPLOYEE')
 
     // Search filter
     if (searchQuery) {
@@ -75,7 +82,7 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
       filtered = filtered.filter(user => user.workspace?.name === selectedWorkspace)
     }
 
-    // Role filter
+    // Role filter (additional filtering beyond EMPLOYEE)
     if (selectedRole !== 'all') {
       filtered = filtered.filter(user => user.role?.role === selectedRole)
     }
@@ -114,17 +121,23 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
     setSearchQuery('')
     setSelectedWorkspace('all')
     setSelectedRole('all')
+    setNewRoleName('')
     onClose()
   }
 
   const handleUserToggle = (userId: string) => {
+    if (customRoles.length === 0) {
+      alert('Please add at least one custom role before selecting users.')
+      return
+    }
+
     const isSelected = selectedUsers.some(user => user.user_id === userId)
     
     if (isSelected) {
       setSelectedUsers(selectedUsers.filter(user => user.user_id !== userId))
     } else {
-      // Add user with default role
-      setSelectedUsers([...selectedUsers, { user_id: userId, role: '4' }])
+      // Add user with first available custom role
+      setSelectedUsers([...selectedUsers, { user_id: userId, role: 'custom-0' }])
     }
   }
 
@@ -148,7 +161,39 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
 
   const getUserRole = (userId: string) => {
     const selectedUser = selectedUsers.find(user => user.user_id === userId)
-    return selectedUser?.role || '4'
+    return selectedUser?.role || (customRoles.length > 0 ? 'custom-0' : '')
+  }
+
+  const addCustomRole = () => {
+    if (newRoleName.trim() && !customRoles.includes(newRoleName.trim())) {
+      const updatedRoles = [...customRoles, newRoleName.trim()]
+      setCustomRoles(updatedRoles)
+      // Save to localStorage
+      localStorage.setItem('customRoles', JSON.stringify(updatedRoles))
+      setNewRoleName('')
+    }
+  }
+
+  const removeCustomRole = (roleToRemove: string) => {
+    const updatedRoles = customRoles.filter(role => role !== roleToRemove)
+    setCustomRoles(updatedRoles)
+    // Save to localStorage
+    localStorage.setItem('customRoles', JSON.stringify(updatedRoles))
+    
+    // Update selected users if they have the removed role
+    setSelectedUsers(selectedUsers.map(user => {
+      const roleIndex = customRoles.findIndex(role => role === roleToRemove)
+      if (user.role === `custom-${roleIndex}`) {
+        return { ...user, role: updatedRoles.length > 0 ? 'custom-0' : '' } // Default to first remaining custom role
+      }
+      return user
+    }))
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      addCustomRole()
+    }
   }
 
   return (
@@ -157,7 +202,12 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
         <DialogHeader>
           <DialogTitle>Assign Users to Project</DialogTitle>
           <DialogDescription>
-            Assign one or more users to the project "{project?.name}". Click on users to select them and assign roles.
+            Assign one or more users to the project "{project?.name}". Add custom roles first, then click on users to select them and assign roles.
+            {customRoles.length === 0 && (
+              <span className='block mt-1 text-orange-600 font-medium'>
+                ⚠️ Please add at least one custom role before selecting users.
+              </span>
+            )}
             {selectedUsers.length > 0 && (
               <span className='block mt-1 text-blue-600 font-medium'>
                 {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
@@ -165,6 +215,47 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
             )}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Add Custom Role Section */}
+        <div className='border-b pb-4 mb-4'>
+          <div className='flex items-center gap-2'>
+            <Input
+              placeholder='Enter new role name...'
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className='flex-1'
+            />
+            <Button
+              type='button'
+              onClick={addCustomRole}
+              disabled={!newRoleName.trim()}
+              className='bg-green-600 hover:bg-green-700'
+            >
+              <Plus className='w-4 h-4 mr-1' />
+              Add Role
+            </Button>
+          </div>
+          {customRoles.length > 0 && (
+            <div className='mt-2'>
+              <span className='text-sm text-gray-600'>Custom roles: </span>
+              <div className='flex flex-wrap gap-1 mt-1'>
+                {customRoles.map((role, index) => (
+                  <Badge 
+                    key={index} 
+                    variant='secondary' 
+                    className='text-xs cursor-pointer hover:bg-red-100 hover:text-red-700 transition-colors'
+                    onClick={() => removeCustomRole(role)}
+                    title='Click to remove this role'
+                  >
+                    {role} ×
+                  </Badge>
+                ))}
+              </div>
+              <p className='text-xs text-gray-500 mt-1'>Click on a role to remove it</p>
+            </div>
+          )}
+        </div>
 
         {/* Filters */}
         <div className='flex items-center gap-4 flex-wrap border-b pb-4'>
@@ -266,7 +357,6 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
                           >
                             <div className='font-medium text-gray-900'>{user.name}</div>
                             <div className='text-sm text-gray-500'>{user.email}</div>
-                            <div className='text-xs text-gray-400'>{user.workspace?.name || 'No workspace'}</div>
                           </div>
                         </div>
                         <div className='flex items-center space-x-2'>
@@ -290,15 +380,19 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
                               value={userRole}
                               onValueChange={(role) => handleRoleChange(user.id, role)}
                             >
-                              <SelectTrigger className='w-32'>
+                              <SelectTrigger className='w-40'>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {availableRoles.map((role) => (
-                                  <SelectItem key={role.value} value={role.value}>
-                                    {role.label}
-                                  </SelectItem>
-                                ))}
+                                {customRoles.length > 0 ? (
+                                  customRoles.map((role, index) => (
+                                    <SelectItem key={`custom-${index}`} value={`custom-${index}`}>
+                                      {role}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <div className='text-xs text-gray-500 px-2 py-1'>No roles available. Add a custom role first.</div>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>
@@ -318,11 +412,13 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
           </Button>
           <Button
             onClick={handleAssign}
-            disabled={selectedUsers.length === 0 || isAssigning}
+            disabled={selectedUsers.length === 0 || isAssigning || customRoles.length === 0}
             className='bg-blue-600 hover:bg-blue-700'
           >
             {isAssigning 
               ? 'Assigning...' 
+              : customRoles.length === 0
+              ? 'Add roles first'
               : `Assign ${selectedUsers.length} User${selectedUsers.length !== 1 ? 's' : ''}`
             }
           </Button>

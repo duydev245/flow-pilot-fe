@@ -29,10 +29,9 @@ export function TasksByComponentsChart({ data }: TasksByComponentsChartProps) {
   ]
 
   return (
-    <Card className='bg-card border-border'>
+    <Card className='bg-card border-border h-full'>
       <CardHeader>
-        <CardTitle className='text-lg font-semibold text-foreground'>Detailed reports</CardTitle>
-        <p className='text-sm text-muted-foreground mt-1'>Tasks by components</p>
+        <CardTitle className='text-lg font-semibold text-foreground'>Tasks by quarter</CardTitle>
       </CardHeader>
 
       <CardContent className='h-[360px]'>

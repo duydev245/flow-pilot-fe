@@ -47,12 +47,12 @@ export function ChartsGridForReports({ dashboardData, loading }: ChartsGridProps
 
 
   return (
-    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-      <Card className='bg-card border border-border'>
+    <div className='grid grid-cols-1 xl:grid-cols-2 gap-6 w-full'>
+      <Card className='bg-card border border-border min-w-0'>
         <CardHeader>
           <CardTitle className='text-lg font-semibold'>Employee Role Distribution</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className='min-w-0'>
           {loading || roleDistributionData.length === 0 ? (
             <div className='h-64 flex items-center justify-center'>
               <div className='text-center'>
@@ -85,18 +85,18 @@ export function ChartsGridForReports({ dashboardData, loading }: ChartsGridProps
               </ResponsiveContainer>
             </div>
           )}
-          <div className='flex justify-center space-x-4 mt-4'>
+          <div className='grid grid-cols-2 lg:grid-cols-3 gap-2 mt-4 px-2'>
             {loading ? (
-              <div className='flex space-x-4'>
-                <div className='h-4 bg-gray-200 rounded w-20 animate-pulse'></div>
-                <div className='h-4 bg-gray-200 rounded w-20 animate-pulse'></div>
-                <div className='h-4 bg-gray-200 rounded w-20 animate-pulse'></div>
-              </div>
+              <>
+                <div className='h-4 bg-gray-200 rounded w-full animate-pulse'></div>
+                <div className='h-4 bg-gray-200 rounded w-full animate-pulse'></div>
+                <div className='h-4 bg-gray-200 rounded w-full animate-pulse'></div>
+              </>
             ) : (
               roleDistributionData.map((item: any) => (
-                <div key={item.name} className='flex items-center space-x-2'>
-                  <div className='w-3 h-3 rounded-full' style={{ backgroundColor: item.color }} />
-                  <span className='text-xs text-muted-foreground'>
+                <div key={item.name} className='flex items-center space-x-2 min-w-0'>
+                  <div className='w-3 h-3 rounded-full flex-shrink-0' style={{ backgroundColor: item.color }} />
+                  <span className='text-xs text-muted-foreground truncate' title={`${item.name} (${item.count}) ${item.value}%`}>
                     {item.name} ({item.count}) {item.value}%
                   </span>
                 </div>
@@ -107,11 +107,11 @@ export function ChartsGridForReports({ dashboardData, loading }: ChartsGridProps
       </Card>
 
       {/* Account Status Over Time */}
-      <Card className='bg-card border border-border'>
+      <Card className='bg-card border border-border min-w-0'>
         <CardHeader>
           <CardTitle className='text-lg font-semibold'>Account Status Over Time</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className='min-w-0'>
           {loading || accountStatusData.length === 0 ? (
             <div className='h-64 flex items-center justify-center'>
               <div className='text-center'>
@@ -137,7 +137,7 @@ export function ChartsGridForReports({ dashboardData, loading }: ChartsGridProps
               </ResponsiveContainer>
             </div>
           )}
-          <div className='flex justify-center space-x-4 mt-4'>
+          <div className='flex justify-center flex-wrap gap-4 mt-4'>
             <div className='flex items-center space-x-2'>
               <div className='w-3 h-3 rounded-full bg-blue-500' />
               <span className='text-xs text-muted-foreground'>Active</span>
@@ -155,7 +155,7 @@ export function ChartsGridForReports({ dashboardData, loading }: ChartsGridProps
       </Card>
 
       {/* Employee Growth Trends */}
-      <Card className='bg-card border border-border'>
+      <Card className='bg-card border border-border min-w-0'>
         <CardHeader>
           <CardTitle className='text-lg font-semibold'>Employee Growth Trends</CardTitle>
           {loading ? (
@@ -178,7 +178,7 @@ export function ChartsGridForReports({ dashboardData, loading }: ChartsGridProps
             </div>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className='min-w-0'>
           {loading || growthTrendsData.length === 0 ? (
             <div className='h-64 flex items-center justify-center'>
               <div className='text-center'>
@@ -208,11 +208,11 @@ export function ChartsGridForReports({ dashboardData, loading }: ChartsGridProps
       </Card>
 
       {/* Top 5 Active Roles */}
-      <Card className='bg-card border border-border'>
+      <Card className='bg-card border border-border min-w-0'>
         <CardHeader>
           <CardTitle className='text-lg font-semibold'>Top 5 Active Roles</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className='min-w-0'>
           {loading || topRolesData.length === 0 ? (
             <div className='space-y-4'>
               {loading ? (
@@ -238,17 +238,17 @@ export function ChartsGridForReports({ dashboardData, loading }: ChartsGridProps
                 const colors = ['bg-blue-500', 'bg-pink-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500']
                 
                 return (
-                  <div key={roleName} className='flex items-center space-x-3'>
-                    <span className='text-sm font-medium w-32 text-left truncate'>{roleName}</span>
-                    <div className='flex-1 bg-secondary rounded-full h-6 relative'>
+                  <div key={roleName} className='flex items-center space-x-3 min-w-0'>
+                    <span className='text-sm font-medium w-28 text-left truncate flex-shrink-0' title={roleName}>{roleName}</span>
+                    <div className='flex-1 bg-secondary rounded-full h-6 relative min-w-0'>
                       <div
                         className={`h-6 rounded-full ${colors[index % colors.length]}`}
-                        style={{ width: `${rolePercentage}%` }}
+                        style={{ width: `${Math.max(rolePercentage, 5)}%` }}
                       />
                     </div>
-                    <div className='flex items-center space-x-2'>
+                    <div className='flex items-center space-x-2 flex-shrink-0'>
                       <span className='text-sm font-medium w-8 text-right'>{roleCount}</span>
-                      <span className='text-xs text-gray-500 w-10 text-right'>({rolePercentage}%)</span>
+                      <span className='text-xs text-gray-500 w-12 text-right'>({rolePercentage}%)</span>
                     </div>
                   </div>
                 )

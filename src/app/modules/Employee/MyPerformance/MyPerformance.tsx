@@ -151,7 +151,7 @@ export default function FlowpilotDashboard() {
           </div>
 
           <div className='space-y-6'>
-            <WeeklyFocusHistory focusLogData={focusLogData} loading={loadingFocusLog} />
+            <PriorityTasks />
 
             <TimerSettings
               focusDuration={timer.focusDuration}
@@ -162,7 +162,7 @@ export default function FlowpilotDashboard() {
               onModeChange={(mode: string) => dispatch(setSelectedMode(mode))}
             />
 
-            <PriorityTasks />
+            <WeeklyFocusHistory focusLogData={focusLogData} loading={loadingFocusLog} />
           </div>
         </div>
       </div>

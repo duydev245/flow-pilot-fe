@@ -1,9 +1,10 @@
 import { FilterDialog } from '@/app/modules/Employee/KanbanBoard/partials/FilterDialog'
-import { KanbanCard } from '@/app/modules/Employee/KanbanBoard/partials/KanbanCard'
+import { ManagerKanbanCard } from './ManagerKanbanCard'
 import { SortDialog } from '@/app/modules/Employee/KanbanBoard/partials/SortDialog'
 import { TaskDetailModal } from './TaskDetailModal'
 import { TaskCreateForm } from './TaskCreateForm'
 import { TaskUpdateForm } from './TaskUpdateForm'
+import { TaskDeleteModal } from './TaskDeleteModal'
 import { ManagerKanbanColumn } from './ManagerKanbanColumn'
 import { ReviewForm } from './ReviewForm'
 import { RejectForm } from './RejectForm'
@@ -19,7 +20,9 @@ import {
   useSensor,
   useSensors
 } from '@dnd-kit/core'
-import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+import { toast } from 'react-toastify'
 
 export interface Tag {
   label: string
@@ -35,6 +38,7 @@ export interface Card {
   comments: number
   avatars: string[]
   originalTask: MyTask
+  isMyTask?: boolean
 }
 
 export interface Column {
@@ -99,103 +103,102 @@ const convertTaskToCard = (task: MyTask): Card => {
     avatars: task.assignees.map(
       (assignee) => assignee.user.avatar_url || `https://i.pravatar.cc/150?u=${assignee.user.id}`
     ),
-    originalTask: task
+    originalTask: task,
+    isMyTask: true // Managers can drag all tasks
   }
 }
 
 export function KanbanBoardForm() {
-  const [columns, setColumns] = useState<Column[]>(initialColumns)
+  const queryClient = useQueryClient()
   const [activeCard, setActiveCard] = useState<Card | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'title' | 'subtasks' | 'comments'>('title')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<MyTask | null>(null)
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
   const [updateTaskOpen, setUpdateTaskOpen] = useState(false)
+  const [deleteTaskOpen, setDeleteTaskOpen] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string>('')
   const [selectedTaskOwnerId, setSelectedTaskOwnerId] = useState<string>('')
   const [selectedTaskForUpdate, setSelectedTaskForUpdate] = useState<MyTask | null>(null)
+  const [selectedTaskForDelete, setSelectedTaskForDelete] = useState<MyTask | null>(null)
+
+  // Fetch tasks using TanStack Query
+  const {
+    data: tasksData,
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ['manager-tasks'],
+    queryFn: async () => {
+      const response = await MyTaskApi.getAllTasksByManager()
+      if (response.success && response.data) {
+        return response.data
+      }
+      throw new Error('Failed to fetch tasks')
+    }
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8
+        distance: 3
       }
     })
   )
 
-  // Function to fetch tasks from API
-  const fetchTasks = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await MyTaskApi.getAllTasksByManager()
+  // Compute columns from query data
+  const columns = useMemo(() => {
+    if (!tasksData) return initialColumns
 
-      if (response.success && response.data) {
-        // Group tasks by column based on status mapping
-        const tasksByColumn: Record<string, Card[]> = {
-          todo: [],
-          doing: [],
-          completed: [],
-          rejected: []
-        }
-
-        console.log('response.data', response.data)
-
-        response.data.forEach((task) => {
-          const card = convertTaskToCard(task)
-
-          // Map task status to kanban columns
-          switch (task.status) {
-            case 'todo':
-            case 'overdued':
-              tasksByColumn.todo.push(card)
-              break
-            case 'doing':
-              tasksByColumn.doing.push(card)
-              break
-            case 'reviewing':
-            case 'completed':
-            case 'feedbacked':
-              tasksByColumn.completed.push(card)
-              break
-            case 'rejected':
-              tasksByColumn.rejected.push(card)
-              break
-            default:
-              // Default to todo if status is unknown
-              tasksByColumn.todo.push(card)
-              break
-          }
-        })
-
-        // Update columns with tasks
-        setColumns((prevColumns) =>
-          prevColumns.map((column) => ({
-            ...column,
-            cards: tasksByColumn[column.id] || []
-          }))
-        )
-      }
-    } catch (err) {
-      setError('Failed to fetch tasks')
-      console.error('Error fetching tasks:', err)
-    } finally {
-      setLoading(false)
+    // Group tasks by column based on status mapping
+    const tasksByColumn: Record<string, Card[]> = {
+      todo: [],
+      doing: [],
+      completed: [],
+      rejected: []
     }
-  }
 
-  // Fetch tasks from API
-  useEffect(() => {
-    fetchTasks()
-  }, [])
+    tasksData.forEach((task) => {
+      const card = convertTaskToCard(task)
+
+      // Map task status to kanban columns
+      switch (task.status) {
+        case 'todo':
+          tasksByColumn.todo.push(card)
+          break
+        case 'overdued':
+          tasksByColumn.doing.push(card)
+          break
+        case 'doing':
+          tasksByColumn.doing.push(card)
+          break
+        case 'reviewing':
+        case 'completed':
+        case 'feedbacked':
+          tasksByColumn.completed.push(card)
+          break
+        case 'rejected':
+          tasksByColumn.rejected.push(card)
+          break
+        default:
+          // Default to todo if status is unknown
+          tasksByColumn.todo.push(card)
+          break
+      }
+    })
+
+    // Update columns with tasks
+    return initialColumns.map((column) => ({
+      ...column,
+      cards: tasksByColumn[column.id] || []
+    }))
+  }, [tasksData])
 
   const filteredAndSortedColumns = useMemo(() => {
     return columns.map((column) => {
@@ -207,7 +210,7 @@ export function KanbanBoardForm() {
       }
 
       // Apply sorting
-      const sortedCards = [...filteredCards].sort((a, b) => {
+      let sortedCards = [...filteredCards].sort((a, b) => {
         let comparison = 0
         if (sortBy === 'title') {
           comparison = a.title.localeCompare(b.title)
@@ -218,6 +221,16 @@ export function KanbanBoardForm() {
         }
         return sortOrder === 'asc' ? comparison : -comparison
       })
+
+      // Special sorting for completed column: reviewing -> feedbacked -> completed
+      if (column.id === 'completed') {
+        const statusOrder = { reviewing: 1, feedbacked: 2, completed: 3 }
+        sortedCards = sortedCards.sort((a, b) => {
+          const aOrder = statusOrder[a.originalTask.status as keyof typeof statusOrder] || 999
+          const bOrder = statusOrder[b.originalTask.status as keyof typeof statusOrder] || 999
+          return aOrder - bOrder
+        })
+      }
 
       return { ...column, cards: sortedCards }
     })
@@ -268,6 +281,34 @@ export function KanbanBoardForm() {
     }
   }
 
+  const handleDelete = async (taskId: string) => {
+    // Find task in current columns
+    const task = columns.flatMap((col) => col.cards).find((card) => card.id === taskId)?.originalTask
+    if (task) {
+      setSelectedTaskForDelete(task)
+      setDeleteTaskOpen(true)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!selectedTaskForDelete) return
+
+    try {
+      await MyTaskApi.deleteTask(selectedTaskForDelete.id)
+
+      // Close modal and reset state
+      setDeleteTaskOpen(false)
+      setSelectedTaskForDelete(null)
+
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ['manager-tasks'] })
+      toast.success('Task deleted successfully')
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      toast.error('Failed to delete task. Please try again.')
+    }
+  }
+
   const handleEdit = async (taskId: string) => {
     // Find task in current columns
     const task = columns.flatMap((col) => col.cards).find((card) => card.id === taskId)?.originalTask
@@ -291,25 +332,37 @@ export function KanbanBoardForm() {
 
     const activeCardId = active.id as string
     const overColumnId = over.id as TaskStatus
+    if (!activeCardId || !overColumnId) return
+
+    if (overColumnId === 'rejected') {
+      toast.error('You cannot move tasks directly to the Rejected column.')
+      return
+    }
 
     // Find source column and card
     let sourceColumn: Column | undefined
-    let cardToMove: Card | undefined
 
     for (const column of columns) {
       const card = column.cards.find((c) => c.id === activeCardId)
       if (card) {
         sourceColumn = column
-        cardToMove = card
         break
       }
     }
 
-    if (!sourceColumn || !cardToMove) return
+    if (!sourceColumn) return
+    if (sourceColumn.id === 'rejected') {
+      toast.error('You cannot move tasks out of the Rejected column.')
+      return
+    }
 
     // Find target column
     const targetColumn = columns.find((col) => col.id === overColumnId)
     if (!targetColumn) return
+    if (targetColumn.id === 'rejected') {
+      toast.error('You cannot move tasks directly to the Rejected column.')
+      return
+    }
 
     // Don't do anything if dropping in the same column
     if (sourceColumn.id === targetColumn.id) return
@@ -323,66 +376,20 @@ export function KanbanBoardForm() {
       newTaskStatus = overColumnId
     }
 
-    // Update columns state optimistically
-    setColumns((prevColumns) => {
-      return prevColumns.map((column) => {
-        if (column.id === sourceColumn.id) {
-          // Remove card from source column
-          return {
-            ...column,
-            cards: column.cards.filter((c) => c.id !== activeCardId)
-          }
-        } else if (column.id === targetColumn.id) {
-          // Add card to target column with updated status
-          const updatedCard = {
-            ...cardToMove,
-            originalTask: {
-              ...cardToMove.originalTask,
-              status: newTaskStatus
-            }
-          }
-          return {
-            ...column,
-            cards: [...column.cards, updatedCard]
-          }
-        }
-        return column
-      })
-    })
-
     // Call API to update task status
     try {
       await MyTaskApi.updateTaskStatus(activeCardId, newTaskStatus)
       console.log(`Task ${activeCardId} status updated to ${newTaskStatus}`)
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ['manager-tasks'] })
+      toast.success('Task status updated successfully')
     } catch (error) {
       console.error('Failed to update task status:', error)
-
-      // Revert the optimistic update if API call fails
-      setColumns((prevColumns) => {
-        return prevColumns.map((column) => {
-          if (column.id === targetColumn.id) {
-            // Remove card from target column
-            return {
-              ...column,
-              cards: column.cards.filter((c) => c.id !== activeCardId)
-            }
-          } else if (column.id === sourceColumn.id) {
-            // Add card back to source column
-            return {
-              ...column,
-              cards: [...column.cards, cardToMove]
-            }
-          }
-          return column
-        })
-      })
-
-      // Show error message to user
-      alert('Failed to update task status. Please try again.')
+      toast.error('Failed to update task status. Please try again.')
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className='flex h-full bg-background items-center justify-center'>
         <div className='text-lg'>Loading tasks...</div>
@@ -393,7 +400,7 @@ export function KanbanBoardForm() {
   if (error) {
     return (
       <div className='flex h-full bg-background items-center justify-center'>
-        <div className='text-lg text-red-500'>{error}</div>
+        <div className='text-lg text-red-500'>{error.message || 'Failed to fetch tasks'}</div>
       </div>
     )
   }
@@ -503,19 +510,34 @@ export function KanbanBoardForm() {
                     onReview={handleReview}
                     onReject={handleReject}
                     onEdit={handleEdit}
+                    onDelete={handleDelete}
                   />
                 </div>
               ))}
             </div>
             <DragOverlay
               dropAnimation={{
-                duration: 200,
-                easing: 'ease-out'
+                duration: 300,
+                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
               }}
             >
               {activeCard ? (
-                <div className='transform scale-105 rotate-1 opacity-90 transition-all duration-200'>
-                  <KanbanCard {...activeCard} />
+                <div className='transform scale-105 rotate-2 opacity-95 transition-all duration-200 shadow-2xl border-2 border-blue-400 rounded-lg overflow-hidden'>
+                  <ManagerKanbanCard
+                    id={activeCard.id}
+                    image={activeCard.image}
+                    title={activeCard.title}
+                    tags={activeCard.tags}
+                    subtasks={activeCard.subtasks}
+                    comments={activeCard.comments}
+                    avatars={activeCard.avatars}
+                    originalTask={activeCard.originalTask}
+                    onViewDetail={() => {}}
+                    onReview={() => {}}
+                    onReject={() => {}}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                  />
                 </div>
               ) : null}
             </DragOverlay>
@@ -542,7 +564,7 @@ export function KanbanBoardForm() {
         open={detailModalOpen}
         onOpenChange={setDetailModalOpen}
         task={selectedTaskForDetail}
-        onTaskUpdated={fetchTasks}
+        onTaskUpdated={() => queryClient.invalidateQueries({ queryKey: ['manager-tasks'] })}
       />
 
       {/* Task Create Modal */}
@@ -552,7 +574,7 @@ export function KanbanBoardForm() {
             <TaskCreateForm
               onSuccess={() => {
                 setCreateTaskOpen(false)
-                fetchTasks()
+                queryClient.invalidateQueries({ queryKey: ['manager-tasks'] })
               }}
               onCancel={() => setCreateTaskOpen(false)}
             />
@@ -568,7 +590,7 @@ export function KanbanBoardForm() {
               taskOwnerId={selectedTaskOwnerId}
               onSuccess={() => {
                 setReviewModalOpen(false)
-                fetchTasks()
+                queryClient.invalidateQueries({ queryKey: ['manager-tasks'] })
               }}
               onCancel={() => setReviewModalOpen(false)}
             />
@@ -584,7 +606,7 @@ export function KanbanBoardForm() {
               taskId={selectedTaskId}
               onSuccess={() => {
                 setRejectModalOpen(false)
-                fetchTasks()
+                queryClient.invalidateQueries({ queryKey: ['manager-tasks'] })
               }}
               onCancel={() => setRejectModalOpen(false)}
             />
@@ -600,13 +622,26 @@ export function KanbanBoardForm() {
               task={selectedTaskForUpdate}
               onSuccess={() => {
                 setUpdateTaskOpen(false)
-                fetchTasks()
+                queryClient.invalidateQueries({ queryKey: ['manager-tasks'] })
               }}
               onCancel={() => setUpdateTaskOpen(false)}
             />
           </div>
         </div>
       )}
+
+      {/* Delete Task Confirmation Modal */}
+      <TaskDeleteModal
+        open={deleteTaskOpen}
+        onOpenChange={(open) => {
+          setDeleteTaskOpen(open)
+          if (!open) {
+            setSelectedTaskForDelete(null)
+          }
+        }}
+        taskName={selectedTaskForDelete?.name || ''}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   )
 }

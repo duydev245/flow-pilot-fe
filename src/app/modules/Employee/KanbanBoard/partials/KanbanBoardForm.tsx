@@ -15,7 +15,9 @@ import {
   useSensor,
   useSensors
 } from '@dnd-kit/core'
-import { useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+import { toast } from 'react-toastify'
 
 export interface Tag {
   label: string
@@ -31,6 +33,7 @@ export interface Card {
   comments: number
   avatars: string[]
   originalTask: MyTask
+  isMyTask: boolean
 }
 
 export interface Column {
@@ -77,7 +80,7 @@ const getPriorityColor = (priority: string): string => {
 }
 
 // Helper function to convert MyTask to Card
-const convertTaskToCard = (task: MyTask): Card => {
+const convertTaskToCard = (task: MyTask, isMyTask: boolean): Card => {
   const tags: Tag[] = [
     {
       label: task.priority.charAt(0).toUpperCase() + task.priority.slice(1),
@@ -93,20 +96,19 @@ const convertTaskToCard = (task: MyTask): Card => {
     subtasks: task.checklists.length,
     comments: task.contents.length,
     avatars: task.assignees.map((assignee) => assignee.user.avatar_url || '/placeholder.svg'),
-    originalTask: task
+    originalTask: task,
+    isMyTask
   }
 }
 
 export function KanbanBoardForm() {
-  const [columns, setColumns] = useState<Column[]>(initialColumns)
+  const queryClient = useQueryClient()
   const [activeCard, setActiveCard] = useState<Card | null>(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<'title' | 'subtasks' | 'comments'>('title')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
   const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<MyTask | null>(null)
 
@@ -118,67 +120,78 @@ export function KanbanBoardForm() {
     })
   )
 
-  // Fetch tasks from API
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const response = await MyTaskApi.getMyTask()
+  // Fetch tasks using TanStack Query
+  const {
+    data: tasksData,
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ['employee-kanban-tasks'],
+    queryFn: async () => {
+      // Fetch my tasks and all tasks
+      const [myTasksResponse, allTasksResponse] = await Promise.all([
+        MyTaskApi.getMyTask(),
+        MyTaskApi.getAllTasksByManager()
+      ])
 
-        if (response.success && response.data) {
-          // Group tasks by column based on status mapping
-          const tasksByColumn: Record<string, Card[]> = {
-            todo: [],
-            doing: [],
-            completed: [],
-            rejected: []
-          }
-
-          response.data.forEach((task) => {
-            const card = convertTaskToCard(task)
-
-            // Map task status to kanban columns
-            switch (task.status) {
-              case 'todo':
-              case 'overdued':
-                tasksByColumn.todo.push(card)
-                break
-              case 'doing':
-                tasksByColumn.doing.push(card)
-                break
-              case 'reviewing':
-              case 'completed':
-              case 'feedbacked':
-                tasksByColumn.completed.push(card)
-                break
-              case 'rejected':
-                tasksByColumn.rejected.push(card)
-                break
-              default:
-                tasksByColumn.todo.push(card)
-                break
-            }
-          })
-
-          // Update columns with tasks
-          setColumns((prevColumns) =>
-            prevColumns.map((column) => ({
-              ...column,
-              cards: tasksByColumn[column.id] || []
-            }))
-          )
+      if (myTasksResponse.success && myTasksResponse.data && allTasksResponse.success && allTasksResponse.data) {
+        // Create a set of my task IDs for quick lookup
+        const myTaskIds = new Set(myTasksResponse.data.map((task) => task.id))
+        return {
+          allTasks: allTasksResponse.data,
+          myTaskIds
         }
-      } catch (err) {
-        setError('Failed to fetch tasks')
-        console.error('Error fetching tasks:', err)
-      } finally {
-        setLoading(false)
       }
+      throw new Error('Failed to fetch tasks')
+    }
+  })
+
+  // Compute columns from query data
+  const columns = useMemo(() => {
+    if (!tasksData) return initialColumns
+
+    // Group all tasks by column based on status mapping
+    const tasksByColumn: Record<string, Card[]> = {
+      todo: [],
+      doing: [],
+      completed: [],
+      rejected: []
     }
 
-    fetchTasks()
-  }, [])
+    tasksData.allTasks.forEach((task) => {
+      const isMyTask = tasksData.myTaskIds.has(task.id)
+      const card = convertTaskToCard(task, isMyTask)
+
+      // Map task status to kanban columns
+      switch (task.status) {
+        case 'todo':
+          tasksByColumn.todo.push(card)
+          break
+        case 'overdued':
+          tasksByColumn.doing.push(card)
+          break
+        case 'doing':
+          tasksByColumn.doing.push(card)
+          break
+        case 'reviewing':
+        case 'completed':
+        case 'feedbacked':
+          tasksByColumn.completed.push(card)
+          break
+        case 'rejected':
+          tasksByColumn.rejected.push(card)
+          break
+        default:
+          tasksByColumn.todo.push(card)
+          break
+      }
+    })
+
+    return initialColumns.map((column) => ({
+      ...column,
+      cards: tasksByColumn[column.id] || []
+    }))
+  }, [tasksData])
 
   const filteredAndSortedColumns = useMemo(() => {
     return columns.map((column) => {
@@ -238,6 +251,11 @@ export function KanbanBoardForm() {
 
     const activeCardId = active.id as string
     const overColumnId = over.id as TaskStatus
+    if (!activeCardId || !overColumnId) return
+    if (overColumnId === 'rejected') {
+      toast.error('You cannot move tasks directly to the Rejected column.')
+      return
+    }
 
     // Find source column and card
     let sourceColumn: Column | undefined
@@ -253,10 +271,18 @@ export function KanbanBoardForm() {
     }
 
     if (!sourceColumn || !cardToMove) return
+    if (sourceColumn.id === 'rejected') {
+      toast.error('You cannot move tasks out of the Rejected column.')
+      return
+    }
 
     // Find target column
     const targetColumn = columns.find((col) => col.id === overColumnId)
     if (!targetColumn) return
+    if (targetColumn.id === 'rejected') {
+      toast.error('You cannot move tasks directly to the Rejected column.')
+      return
+    }
 
     // Don't do anything if dropping in the same column
     if (sourceColumn.id === targetColumn.id) return
@@ -271,63 +297,20 @@ export function KanbanBoardForm() {
       newTaskStatus = overColumnId
     }
 
-    // Update columns state optimistically
-    setColumns((prevColumns) => {
-      return prevColumns.map((column) => {
-        if (column.id === sourceColumn.id) {
-          // Remove card from source column
-          return {
-            ...column,
-            cards: column.cards.filter((c) => c.id !== activeCardId)
-          }
-        } else if (column.id === targetColumn.id) {
-          // Add card to target column with updated status
-          const updatedCard = {
-            ...cardToMove,
-            originalTask: {
-              ...cardToMove.originalTask,
-              status: newTaskStatus
-            }
-          }
-          return {
-            ...column,
-            cards: [...column.cards, updatedCard]
-          }
-        }
-        return column
-      })
-    })
-
     // Call API to update task status
     try {
       await MyTaskApi.updateTaskStatus(activeCardId, newTaskStatus)
       console.log(`Task ${activeCardId} status updated to ${newTaskStatus}`)
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ['employee-kanban-tasks'] })
+      toast.success('Task status updated successfully')
     } catch (error) {
       console.error('Failed to update task status:', error)
-
-      // Revert the optimistic update if API call fails
-      setColumns((prevColumns) => {
-        return prevColumns.map((column) => {
-          if (column.id === targetColumn.id) {
-            // Remove card from target column
-            return {
-              ...column,
-              cards: column.cards.filter((c) => c.id !== activeCardId)
-            }
-          } else if (column.id === sourceColumn.id) {
-            // Add card back to source column
-            return {
-              ...column,
-              cards: [...column.cards, cardToMove]
-            }
-          }
-          return column
-        })
-      })
+      toast.error('Failed to update task status. Please try again.')
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className='flex h-full bg-background items-center justify-center'>
         <div className='text-lg'>Loading tasks...</div>
@@ -338,7 +321,7 @@ export function KanbanBoardForm() {
   if (error) {
     return (
       <div className='flex h-full bg-background items-center justify-center'>
-        <div className='text-lg text-red-500'>{error}</div>
+        <div className='text-lg text-red-500'>{error.message || 'Failed to fetch tasks'}</div>
       </div>
     )
   }
@@ -468,7 +451,12 @@ export function KanbanBoardForm() {
         onSortByChange={setSortBy}
         onSortOrderChange={setSortOrder}
       />
-      <TaskDetailModal open={detailModalOpen} onOpenChange={setDetailModalOpen} task={selectedTaskForDetail} />
+      <TaskDetailModal
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        task={selectedTaskForDetail}
+        onTaskUpdated={() => queryClient.invalidateQueries({ queryKey: ['employee-kanban-tasks'] })}
+      />
     </div>
   )
 }

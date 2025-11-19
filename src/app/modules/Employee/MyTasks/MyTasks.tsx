@@ -16,21 +16,19 @@ import { Separator } from '@/app/components/ui/separator'
 import {
   ArrowDownWideNarrow,
   Calendar,
-  CircleDotDashed,
   ClipboardList,
   Download,
   ListFilter,
   Loader2,
   MessageSquare,
   Paperclip,
-  Plus,
   Search,
   Star,
   Tag,
   Upload,
   User
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import type { FileByTask, MyTask } from './models/myTask.type'
 import { AddChecklistItem } from './partials/AddChecklistItem'
 import { ChecklistItem } from './partials/ChecklistItem'
@@ -86,7 +84,7 @@ const getStatusStyles = (status: string) => {
         statusColor: 'bg-red-800',
         statusBorder: 'border-red-800',
         statusBg: 'bg-red-100',
-        displayText: 'Overdue'
+        displayText: 'Overdued'
       }
     default:
       return {
@@ -138,8 +136,8 @@ export default function MyTasksPage() {
   const [uploadingFile, setUploadingFile] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<string>('status')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [sortBy, setSortBy] = useState<string>('priority')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [searchTerm, setSearchTerm] = useState<string>('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -192,8 +190,24 @@ export default function MyTasksPage() {
     }
   }
 
+  const handleUpdateStatus = async (taskId: string, newStatus: string) => {
+    try {
+      await MyTaskApi.updateTaskStatus(taskId, newStatus)
+      await refreshTasks()
+      // Update selectedTaskData if it's the current selected task
+      if (selectedTask === taskId) {
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus as MyTask['status'] } : task))
+        )
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+      alert('Failed to update task status')
+    }
+  }
+
   // Filter and sort tasks
-  const filteredAndSortedTasks = () => {
+  const filteredAndSortedTasks = useCallback(() => {
     let filteredTasks = tasks
 
     // Filter by status
@@ -206,8 +220,37 @@ export default function MyTasksPage() {
       filteredTasks = filteredTasks.filter((task) => task.name.toLowerCase().includes(searchTerm.toLowerCase()))
     }
 
-    // Sort tasks
+    // Sort tasks with status priority first, then priority within each status
     const sortedTasks = [...filteredTasks].sort((a, b) => {
+      // Primary sort: Status order (overdued -> doing -> todo -> reviewing -> feedbacked)
+      const statusOrder = {
+        overdued: 1,
+        doing: 2,
+        todo: 3,
+        reviewing: 4,
+        feedbacked: 5,
+        completed: 6,
+        rejected: 7
+      }
+
+      const aStatusOrder = statusOrder[a.status as keyof typeof statusOrder] || 999
+      const bStatusOrder = statusOrder[b.status as keyof typeof statusOrder] || 999
+
+      // If status is different, sort by status
+      if (aStatusOrder !== bStatusOrder) {
+        return aStatusOrder - bStatusOrder
+      }
+
+      // Secondary sort: Priority within same status (high -> medium -> low)
+      const priorityOrder = { high: 1, medium: 2, low: 3 }
+      const aPriorityOrder = priorityOrder[a.priority as keyof typeof priorityOrder] || 999
+      const bPriorityOrder = priorityOrder[b.priority as keyof typeof priorityOrder] || 999
+
+      if (aPriorityOrder !== bPriorityOrder) {
+        return aPriorityOrder - bPriorityOrder
+      }
+
+      // Tertiary sort: Apply user-selected sorting option
       let aValue: any
       let bValue: any
 
@@ -216,50 +259,19 @@ export default function MyTasksPage() {
           aValue = new Date(a.due_at).getTime()
           bValue = new Date(b.due_at).getTime()
           break
-        case 'priority': {
-          const priorityOrder = { high: 3, medium: 2, low: 1 }
-          aValue = priorityOrder[a.priority as keyof typeof priorityOrder] || 0
-          bValue = priorityOrder[b.priority as keyof typeof priorityOrder] || 0
-          break
-        }
         case 'name':
           aValue = a.name.toLowerCase()
           bValue = b.name.toLowerCase()
           break
-        case 'status': {
-          // Custom status order: todo -> doing -> overdued -> completed -> reviewing -> rejected -> feedbacked
-          const statusOrder = {
-            todo: 1,
-            doing: 2,
-            overdued: 3,
-            completed: 4,
-            reviewing: 5,
-            rejected: 6,
-            feedbacked: 7
-          }
-          aValue = statusOrder[a.status as keyof typeof statusOrder] || 999
-          bValue = statusOrder[b.status as keyof typeof statusOrder] || 999
-          break
-        }
         case 'created_at':
           aValue = new Date(a.created_at).getTime()
           bValue = new Date(b.created_at).getTime()
           break
-        default: {
-          // Default sorting by custom status order
-          const defaultStatusOrder = {
-            todo: 1,
-            doing: 2,
-            overdued: 3,
-            completed: 4,
-            reviewing: 5,
-            rejected: 6,
-            feedbacked: 7
-          }
-          aValue = defaultStatusOrder[a.status as keyof typeof defaultStatusOrder] || 999
-          bValue = defaultStatusOrder[b.status as keyof typeof defaultStatusOrder] || 999
+        default:
+          // Default to created_at if no specific sort is selected
+          aValue = new Date(a.created_at).getTime()
+          bValue = new Date(b.created_at).getTime()
           break
-        }
       }
 
       if (sortOrder === 'asc') {
@@ -270,7 +282,7 @@ export default function MyTasksPage() {
     })
 
     return sortedTasks
-  }
+  }, [tasks, statusFilter, searchTerm, sortBy, sortOrder])
 
   const fetchTaskFiles = async (taskId: string) => {
     try {
@@ -334,12 +346,6 @@ export default function MyTasksPage() {
 
   const selectedTaskData = tasks.find((task) => task.id === selectedTask)
 
-  const activityLog = [
-    { type: 'create', user: 'System', action: 'Task created', time: '2024-07-24 06:00 AM' },
-    { type: 'status', user: 'Alice Johnson', action: 'Status changed to In Progress', time: '2024-07-24 06:36 AM' },
-    { type: 'comment', user: 'Bob Miller', action: 'Added a comment', time: '2024-07-25 10:30 AM' }
-  ]
-
   if (loading) {
     return (
       <div className='flex items-center justify-center h-screen'>
@@ -381,7 +387,7 @@ export default function MyTasksPage() {
                   <DropdownMenuItem onClick={() => setStatusFilter('completed')}>Completed</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setStatusFilter('rejected')}>Rejected</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setStatusFilter('feedbacked')}>Feedback</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setStatusFilter('overdued')}>Overdue</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter('overdued')}>Overdued</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <DropdownMenu>
@@ -442,6 +448,11 @@ export default function MyTasksPage() {
                       <Badge className={`${statusStyles.statusColor} text-white text-xs rounded-2xl px-2 py-1`}>
                         {statusStyles.displayText}
                       </Badge>
+                      <Badge
+                        className={`${getPriorityStyles(task.priority).priorityColor} text-xs rounded-2xl px-2 py-1`}
+                      >
+                        {getPriorityStyles(task.priority).displayText}
+                      </Badge>
                     </div>
                     <div className='flex items-center space-x-3'>
                       {task.contents.length > 0 && (
@@ -475,8 +486,46 @@ export default function MyTasksPage() {
           {selectedTaskData && (
             <div className='p-6'>
               <div className='mb-6'>
-                <h1 className='text-2xl font-semibold text-gray-900'>{selectedTaskData.name}</h1>
-                <p className='text-2xl font-semibold text-gray-900 mb-4'>(Deadline Approaching)</p>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <h1 className='text-2xl font-semibold text-gray-900'>{selectedTaskData.name}</h1>
+                    {selectedTaskData.status !== 'reviewing' &&
+                      selectedTaskData.status !== 'completed' &&
+                      selectedTaskData.status !== 'feedbacked' &&
+                      selectedTaskData.status !== 'rejected' && (
+                        <p className='text-2xl font-semibold text-red-600 mb-4'>(DEADLINE APPROACHING)</p>
+                      )}
+                  </div>
+                  <div className='flex gap-2'>
+                    {selectedTaskData.status === 'todo' && (
+                      <Button
+                        size='sm'
+                        onClick={() => handleUpdateStatus(selectedTaskData.id, 'doing')}
+                        className='bg-blue-600 text-white hover:bg-blue-700'
+                      >
+                        Mark as Doing
+                      </Button>
+                    )}
+                    {selectedTaskData.status === 'overdued' && (
+                      <Button
+                        size='sm'
+                        onClick={() => handleUpdateStatus(selectedTaskData.id, 'reviewing')}
+                        className='bg-green-600 text-white hover:bg-green-700'
+                      >
+                        Mark as Complete
+                      </Button>
+                    )}
+                    {selectedTaskData.status === 'doing' && (
+                      <Button
+                        size='sm'
+                        onClick={() => handleUpdateStatus(selectedTaskData.id, 'reviewing')}
+                        className='bg-green-600 text-white hover:bg-green-700'
+                      >
+                        Mark as Completed
+                      </Button>
+                    )}
+                  </div>
+                </div>
                 <p className='text-gray-700 leading-relaxed mb-4'>
                   {selectedTaskData.description || 'No description available'}
                 </p>
@@ -534,7 +583,6 @@ export default function MyTasksPage() {
 
                 <Separator className='my-6' />
 
-                {/* Checklist */}
                 <div className='mb-8'>
                   <h3 className='text-lg font-semibold text-gray-900 mb-4'>
                     Checklist (
@@ -554,33 +602,12 @@ export default function MyTasksPage() {
                       ))}
                   </div>
 
-                  <AddChecklistItem taskId={selectedTaskData.id} onSuccess={refreshTasks} />
-                </div>
-
-                <Separator className='my-6' />
-
-                {/* Activity Log */}
-                <div className='mb-8'>
-                  <h3 className='text-lg font-semibold text-gray-900 mb-4'>Activity Log (3)</h3>
-                  <div className='space-y-3'>
-                    {activityLog.map((activity, index) => (
-                      <div key={index} className='flex items-center space-x-3'>
-                        <div className='flex items-center justify-center'>
-                          {activity.type === 'create' && <Plus className='w-5 h-5 text-blue-600' />}
-                          {activity.type === 'status' && <CircleDotDashed className='w-5 h-5 text-blue-600' />}
-                          {activity.type === 'comment' && <MessageSquare className='w-5 h-5 text-blue-600' />}
-                        </div>
-
-                        {/* nội dung + time cùng hàng */}
-                        <div className=' flex  items-center'>
-                          <p className='text-sm text-gray-900 mr-1'>
-                            <span className='font-medium'>{activity.user}</span> {activity.action}
-                          </p>
-                          <span className='text-xs text-gray-500'>{activity.time}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  {selectedTaskData.status !== 'reviewing' &&
+                    selectedTaskData.status !== 'completed' &&
+                    selectedTaskData.status !== 'feedbacked' &&
+                    selectedTaskData.status !== 'rejected' && (
+                      <AddChecklistItem taskId={selectedTaskData.id} onSuccess={refreshTasks} />
+                    )}
                 </div>
 
                 <Separator className='my-6' />
@@ -607,12 +634,17 @@ export default function MyTasksPage() {
 
                   <Separator className='my-6' />
 
-                  <CreateTaskContentForm
-                    taskId={selectedTaskData.id}
-                    userId={currentUserId}
-                    type='comment'
-                    onSuccess={refreshTasks}
-                  />
+                  {selectedTaskData.status !== 'reviewing' &&
+                    selectedTaskData.status !== 'completed' &&
+                    selectedTaskData.status !== 'feedbacked' &&
+                    selectedTaskData.status !== 'rejected' && (
+                      <CreateTaskContentForm
+                        taskId={selectedTaskData.id}
+                        userId={currentUserId}
+                        type='comment'
+                        onSuccess={refreshTasks}
+                      />
+                    )}
                 </div>
 
                 <Separator className='my-6' />
@@ -639,14 +671,19 @@ export default function MyTasksPage() {
                   <Separator className='my-6' />
 
                   {/* Add Note Form */}
-                  <CreateTaskContentForm
-                    taskId={selectedTaskData.id}
-                    userId={currentUserId}
-                    type='note'
-                    onSuccess={refreshTasks}
-                    placeholder='Add a note...'
-                    buttonText='Add Note'
-                  />
+                  {selectedTaskData.status !== 'reviewing' &&
+                    selectedTaskData.status !== 'completed' &&
+                    selectedTaskData.status !== 'feedbacked' &&
+                    selectedTaskData.status !== 'rejected' && (
+                      <CreateTaskContentForm
+                        taskId={selectedTaskData.id}
+                        userId={currentUserId}
+                        type='note'
+                        onSuccess={refreshTasks}
+                        placeholder='Add a note...'
+                        buttonText='Add Note'
+                      />
+                    )}
                 </div>
 
                 <Separator className='my-6' />
@@ -695,25 +732,30 @@ export default function MyTasksPage() {
                       onChange={handleFileUpload}
                       disabled={uploadingFile}
                     />
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      className='w-full mt-2'
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingFile}
-                    >
-                      {uploadingFile ? (
-                        <>
-                          <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className='w-4 h-4 mr-2' />
-                          Upload Attachment
-                        </>
+                    {selectedTaskData.status !== 'reviewing' &&
+                      selectedTaskData.status !== 'completed' &&
+                      selectedTaskData.status !== 'feedbacked' &&
+                      selectedTaskData.status !== 'rejected' && (
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          className='w-full mt-2'
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingFile}
+                        >
+                          {uploadingFile ? (
+                            <>
+                              <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className='w-4 h-4 mr-2' />
+                              Upload Attachment
+                            </>
+                          )}
+                        </Button>
                       )}
-                    </Button>
                   </div>
                 </div>
               </div>

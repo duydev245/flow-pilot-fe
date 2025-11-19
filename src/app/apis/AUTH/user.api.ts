@@ -91,8 +91,18 @@ export class UserSuperAdminAPI {
     })
     return response.data
   }
+
+  /**
+   * Get user info by ID
+   * GET /user/user-info/:id
+   */
+  static async getUserInfo(id: string): Promise<any> {
+    const response = await fetcher.get(`/user/user-info/${id}`)
+    return response.data
+  }
+  
 }
 
 // Export individual functions for easier imports
-export const { getAllUsers, getUserById, createUser, updateUser, deleteUser, activateUser, getAllUserByAdmin, getMe } =
+export const { getAllUsers, getUserById, createUser, updateUser, deleteUser, activateUser, getAllUserByAdmin, getMe, getUserInfo } =
   UserSuperAdminAPI

@@ -8,9 +8,10 @@ interface ManagerKanbanColumnProps {
   onReview?: (taskId: string, taskOwnerId: string) => void
   onReject?: (taskId: string) => void
   onEdit?: (taskId: string) => void
+  onDelete?: (taskId: string) => void
 }
 
-export function ManagerKanbanColumn({ column, onViewDetail, onReview, onReject, onEdit }: ManagerKanbanColumnProps) {
+export function ManagerKanbanColumn({ column, onViewDetail, onReview, onReject, onEdit, onDelete }: ManagerKanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id
   })
@@ -33,6 +34,7 @@ export function ManagerKanbanColumn({ column, onViewDetail, onReview, onReject, 
             onReview={onReview}
             onReject={onReject}
             onEdit={onEdit}
+            onDelete={onDelete}
           />
         ))}
       </div>

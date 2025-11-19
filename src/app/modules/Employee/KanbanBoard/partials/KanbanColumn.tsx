@@ -31,9 +31,11 @@ export function KanbanColumn({ column, onViewDetail }: KanbanColumnProps) {
             <KanbanCard key={card.id} {...card} onViewDetail={onViewDetail ? () => onViewDetail(card.id) : undefined} />
           ))
         ) : (
-          <div className='text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg'>
-            Drop here
-          </div>
+          column.id !== 'rejected' && (
+            <div className='text-center text-sm text-muted-foreground py-4 border border-dashed rounded-lg'>
+              Drop here
+            </div>
+          )
         )}
       </div>
     </div>

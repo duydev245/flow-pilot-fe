@@ -35,7 +35,7 @@ export function AIAssistant() {
     }
 
     const insights = allProjectsAIAnalysis
-      ? `Key metrics: Quality at ${avgQuality.toFixed(1)}/100, Burnout level at ${avgBurnout.toFixed(1)}%. ${totalProjects} active projects with ${allProjectsAIAnalysis.aggregateMetrics?.totalCompleted || 0} completed tasks.`
+      ? `Key metrics: Quality at ${avgQuality?.toFixed(1)}/100, Burnout level at ${avgBurnout.toFixed(1)}%. ${totalProjects} active projects with ${allProjectsAIAnalysis.aggregateMetrics?.totalCompleted || 0} completed tasks.`
       : allProjectsOverview
         ? `Project insights: ${totalProjects} projects with ${avgCompletionRate.toFixed(1)}% average completion rate. ${allProjectsOverview.aggregateMetrics?.totalTasks || 0} total tasks.`
         : `Individual assessment: ${evaluateName} shows ${evaluate?.status === 'active' ? 'active engagement' : 'standard performance'}.`
@@ -89,7 +89,7 @@ export function AIAssistant() {
                     <>
                       Performance Metrics: {allProjectsAIAnalysis.aggregateMetrics.totalCompleted} tasks completed,{' '}
                       {allProjectsAIAnalysis.aggregateMetrics.totalDelay} delayed. Quality:{' '}
-                      {allProjectsAIAnalysis.aggregateMetrics.avgQuality.toFixed(1)}/100.{' '}
+                      {allProjectsAIAnalysis.aggregateMetrics.avgQuality?.toFixed(1)}/100.{' '}
                     </>
                   )}
                   {allProjectsOverview?.aggregateMetrics && (

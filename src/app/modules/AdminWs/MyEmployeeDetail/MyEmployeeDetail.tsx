@@ -1,9 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Send, Settings } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/app/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Badge } from '@/app/components/ui/badge'
-import { Input } from '@/app/components/ui/input'
 import { PATH } from '@/app/routes/path'
 import { MyTaskApi } from '@/app/apis/AUTH/performance.api'
 import { useEffect, useState } from 'react'
@@ -55,6 +54,13 @@ interface PerformanceData {
       color: string
     }>
     warning: boolean
+  }
+  aiSummary: string
+  aiInsights: {
+    keyInsights: string[]
+    recommendations: string[]
+    riskFactors: string[]
+    performanceScore: number
   }
 }
 
@@ -116,6 +122,21 @@ const mockApiResponse: PerformanceData = {
       }
     ],
     warning: true
+  },
+  aiSummary: 'Performance analysis shows consistent improvement in productivity with well-balanced stress levels.',
+  aiInsights: {
+    keyInsights: [
+      'Strong performance in project completion',
+      'Good work-life balance maintained',
+      'Team collaboration skills are excellent'
+    ],
+    recommendations: [
+      'Continue current workflow practices',
+      'Consider mentoring junior team members',
+      'Focus on advanced skill development'
+    ],
+    riskFactors: [],
+    performanceScore: 85
   }
 }
 
@@ -161,7 +182,7 @@ export default function MyEmployeeDetail() {
         const response = await MyTaskApi.getIndividualDashboard(userId, 'monthly', '2025-01-01', '2025-03-31')
 
         if (response.success && response.data) {
-          setPerformanceData(response.data)
+          setPerformanceData(response.data as PerformanceData)
           setError(null)
         } else {
           setError('Failed to fetch performance data')
@@ -258,39 +279,80 @@ export default function MyEmployeeDetail() {
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 p-6'>
         {/* Left Column */}
         <div className='space-y-6'>
-          {/* AI Assistant */}
+          {/* AI Analysis */}
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center space-x-2'>
                 <div className='w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center'>
                   <span className='text-white text-sm font-bold'>🤖</span>
                 </div>
-                <span>AI Assistant</span>
-                <Settings className='w-4 h-4 ml-auto text-gray-400' />
+                <span>AI Performance Analysis</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className='space-y-4'>
-                <div className=' p-3 rounded-lg text-sm text-gray-700'>
-                  Hello! I am your Employee Performance AI. How can I assist you with employee evaluations today?
+                {/* AI Summary */}
+                <div className='bg-blue-50 p-4 rounded-lg'>
+                  <h4 className='font-medium text-blue-900 mb-2'>Summary</h4>
+                  <p className='text-sm text-blue-800'>{currentData.aiSummary}</p>
                 </div>
 
-                <div className='bg-blue-50 p-3 rounded-lg'>
-                  <div className='text-sm text-blue-800 font-medium mb-2'>
-                    Can you summarize Sarah Chen's performance over the last quarter?
-                  </div>
-                  <div className='text-xs text-blue-600 bg-blue-100 p-2 rounded'>
-                    Vu handsome demonstrated exceptional performance in Q2, particularly in project completion rate
-                    (98%) and team collaboration. Are there specific areas you'd like to delve into?
-                  </div>
+                {/* Performance Score */}
+                <div className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'>
+                  <span className='text-sm font-medium text-gray-700'>Performance Score</span>
+                  <Badge 
+                    className={`text-sm px-3 py-1 ${
+                      currentData.aiInsights.performanceScore >= 80 
+                        ? 'bg-green-100 text-green-800 border-green-300' 
+                        : currentData.aiInsights.performanceScore >= 60
+                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                        : 'bg-red-100 text-red-800 border-red-300'
+                    }`}
+                  >
+                    {currentData.aiInsights.performanceScore}/100
+                  </Badge>
                 </div>
 
-                <div className='flex items-center space-x-2'>
-                  <Input placeholder='Ask about employee performance...' className='flex-1 text-sm' />
-                  <Button size='sm' className='bg-indigo-500 hover:bg-indigo-600'>
-                    <Send className='w-4 h-4' />
-                  </Button>
+                {/* Key Insights */}
+                <div>
+                  <h4 className='font-medium text-gray-900 mb-2'>Key Insights</h4>
+                  <ul className='space-y-1'>
+                    {currentData.aiInsights.keyInsights.map((insight, index) => (
+                      <li key={index} className='text-sm text-gray-700 flex items-start'>
+                        <span className='text-blue-500 mr-2'>•</span>
+                        {insight}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
+
+                {/* Recommendations */}
+                <div>
+                  <h4 className='font-medium text-gray-900 mb-2'>Recommendations</h4>
+                  <ul className='space-y-1'>
+                    {currentData.aiInsights.recommendations.map((recommendation, index) => (
+                      <li key={index} className='text-sm text-gray-700 flex items-start'>
+                        <span className='text-green-500 mr-2'>→</span>
+                        {recommendation}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Risk Factors */}
+                {currentData.aiInsights.riskFactors.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-red-900 mb-2'>Risk Factors</h4>
+                    <ul className='space-y-1'>
+                      {currentData.aiInsights.riskFactors.map((risk, index) => (
+                        <li key={index} className='text-sm text-red-700 flex items-start'>
+                          <span className='text-red-500 mr-2'>⚠</span>
+                          {risk}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

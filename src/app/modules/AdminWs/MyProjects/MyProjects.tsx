@@ -198,7 +198,24 @@ function MyProjects() {
     if (!selectedProject) return
 
     try {
-      await projectApi.assignUsersToProject(selectedProject.id, users)
+      // Transform custom roles to their actual names before sending to API
+      const transformedUsers = users.map(user => {
+        let roleValue = user.role
+        
+        // If it's a custom role, get the actual role name
+        if (user.role.startsWith('custom-')) {
+          const customRoles = JSON.parse(localStorage.getItem('customRoles') || '[]')
+          const roleIndex = parseInt(user.role.replace('custom-', ''))
+          roleValue = customRoles[roleIndex] || user.role
+        }
+        
+        return {
+          user_id: user.user_id,
+          role: roleValue
+        }
+      })
+
+      await projectApi.assignUsersToProject(selectedProject.id, transformedUsers)
       const userCount = users.length
       toast.success(`${userCount} user${userCount !== 1 ? 's' : ''} assigned to project successfully!`)
       setIsAssignModalOpen(false)

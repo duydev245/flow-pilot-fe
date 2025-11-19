@@ -19,20 +19,88 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker Image
-        run: docker build -t tienmanh/flow-pilot-fe .
+        run: docker build -t duyadmindocker/flow-pilot-fe .
 
       - name: Push Docker Image
-        run: docker push tienmanh/flow-pilot-fe:latest
+        run: docker push duyadmindocker/flow-pilot-fe:latest
 
   deploy:
     needs: build
     runs-on: [self-hosted, linux, x64]
     steps:
+      # - name: Log in to Docker Hub
+      #   run: |
+      #     echo "${{ secrets.DOCKERHUB_TOKEN }}" | sudo docker login \
+      #       -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
       - name: Pull image from Docker Hub
-        run: sudo docker pull tienmanh/flow-pilot-fe:latest
+        run: sudo docker pull duyadmindocker/flow-pilot-fe:latest
 
-      - name: Delete Old Container
-        run: sudo docker rm -f flow-pilot-fe-container || true
+      - name: Create env file
+        run: |
+          cat > container.env << 'EOF'
+          VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+          VITE_NODE_ENV=${{ secrets.VITE_NODE_ENV }}
+          EOF
 
-      - name: Run docker container
-        run: sudo docker run -d -p 6868:6868 --name flow-pilot-fe-container tienmanh/flow-pilot-fe:latest
+      - name: Stop & remove old container (if any)
+        run: |
+          sudo docker ps -aq --filter "name=flow-pilot-fe-container" | xargs -r sudo docker rm -f
+
+    # ⚠️ Map NỘI BỘ để không đụng Nginx đang giữ port 80
+      - name: Run new container (bind only to localhost)
+        run: |
+          sudo docker run -d \
+            --name flow-pilot-fe-container \
+            -p 127.0.0.1:6868:80 \
+            --env-file container.env \
+            --restart unless-stopped \
+            duyadmindocker/flow-pilot-fe:latest
+
+      - name: Clean up
+        run: |
+          rm -f container.env
+
+      - name: Checking container status
+        run: |
+          sudo docker ps | grep flow-pilot-fe-container
+
+      # - name: Stop & remove old container (if any)
+      #   run: |
+      #     sudo docker ps -aq --filter "name=flow-pilot-fe-container" \
+      #     | xargs -r sudo docker rm -f
+
+      # Map 80 -> 6868 để không phải gõ :6868
+      # - name: Run docker container
+      #   run: |
+      #     sudo docker run -d \
+      #       --name flow-pilot-fe-container \
+      #       -p 80:6868 \
+      #       --restart unless-stopped \
+      #       duyadmindocker/flow-pilot-fe:latest
+
+      # - name: Cleanup dangling images
+      #   run: sudo docker image prune -f
+      
+      # - name: Create env file and run container
+      #   run: |
+      #     cat > container.env << EOF
+      #     VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+      #     VITE_NODE_ENV=${{ secrets.VITE_NODE_ENV }}
+      #     EOF
+
+      #     echo "Removing old container..."
+      #     sudo docker rm -f flow-pilot-fe-container || true
+
+      #     echo "Starting new container..."
+      #     sudo docker container run -dp 80:6868 --name flow-pilot-fe-container --env-file container.env duyadmindocker/flow-pilot-fe:latest
+
+      #     echo "Cleaning up env file..."
+      #     rm container.env
+
+      #     echo "Checking container status..."
+      #     sudo docker ps | grep flow-pilot-fe-container
+
+      #     echo "Container logs:"
+      #     sleep 3
+      #     sudo docker logs --tail 20 flow-pilot-fe-container

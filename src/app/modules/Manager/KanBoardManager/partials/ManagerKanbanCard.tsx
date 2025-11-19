@@ -2,7 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { Card } from '@/app/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/app/components/ui/avatar'
 import { Button } from '@/app/components/ui/button'
-import { MessageSquare, ThumbsUp, ThumbsDown, Eye, Pencil } from 'lucide-react'
+import { MessageSquare, ThumbsUp, ThumbsDown, Eye, Pencil, Trash2 } from 'lucide-react'
 import type { MyTask } from '@/app/modules/Employee/MyTasks/models/myTask.type'
 
 interface Tag {
@@ -23,6 +23,7 @@ interface ManagerKanbanCardProps {
   onReview?: (taskId: string, taskOwnerId: string) => void
   onReject?: (taskId: string) => void
   onEdit?: (taskId: string) => void
+  onDelete?: (taskId: string) => void
 }
 
 const tagColors: Record<string, string> = {
@@ -47,10 +48,12 @@ export function ManagerKanbanCard({
   onViewDetail,
   onReview,
   onReject,
-  onEdit
+  onEdit,
+  onDelete
 }: ManagerKanbanCardProps) {
-  // Check if task can be dragged (not feedbacked or rejected)
-  const isDragDisabled = originalTask.status === 'feedbacked' || originalTask.status === 'rejected'
+  // Check if task can be dragged (not feedbacked or rejected or completed)
+  const isDragDisabled =
+    originalTask.status === 'feedbacked' || originalTask.status === 'rejected' || originalTask.status === 'completed'
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: id,
@@ -64,6 +67,9 @@ export function ManagerKanbanCard({
     : undefined
 
   const isReviewing = originalTask.status === 'reviewing'
+  const isCanBeDeleted = originalTask.status === 'todo' || originalTask.status === 'overdued'
+  const isEditDisabled =
+    originalTask.status === 'reviewing' || originalTask.status === 'rejected' || originalTask.status === 'feedbacked'
   const taskOwnerId = originalTask.assignees[0]?.user?.id || ''
 
   return (
@@ -72,7 +78,7 @@ export function ManagerKanbanCard({
       style={style}
       {...(isDragDisabled ? {} : listeners)}
       {...(isDragDisabled ? {} : attributes)}
-      className={`overflow-hidden border border-border bg-card p-0 shadow-sm transition-all ${
+      className={`overflow-hidden border border-border bg-card p-0 shadow-sm transition-all relative ${
         isDragDisabled
           ? 'opacity-75 cursor-not-allowed'
           : isDragging
@@ -80,6 +86,21 @@ export function ManagerKanbanCard({
             : 'cursor-grab hover:shadow-md'
       } ${isReviewing ? 'ring-2 ring-purple-500 ring-opacity-50' : ''} ${isDragDisabled ? 'bg-gray-50' : ''}`}
     >
+      {/* Delete button for todo tasks */}
+      {isCanBeDeleted && (
+        <Button
+          size='default'
+          variant='destructive'
+          className='absolute top-2 right-2 z-10 h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600'
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete?.(id)
+          }}
+        >
+          <Trash2 className='h-5 w-5' />
+        </Button>
+      )}
+
       {image && (
         <div className='h-32 overflow-hidden'>
           <img src={image} alt='Task image' className='h-full w-full object-cover' />
@@ -111,6 +132,11 @@ export function ManagerKanbanCard({
           {originalTask.status === 'rejected' && (
             <span className='rounded-full px-2 py-1 text-xs font-bold bg-red-200 text-red-800 border border-red-500'>
               ❌ REJECTED
+            </span>
+          )}
+          {originalTask.status === 'overdued' && (
+            <span className='rounded-full px-2 py-1 text-xs font-bold bg-red-200 text-red-800 border border-red-500'>
+              ⏰ OVERDUED
             </span>
           )}
         </div>
@@ -177,6 +203,7 @@ export function ManagerKanbanCard({
               size='sm'
               variant='outline'
               className='flex-1 h-7 text-xs'
+              disabled={isEditDisabled}
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit?.(id)

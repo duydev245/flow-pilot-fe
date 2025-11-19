@@ -32,8 +32,20 @@ export function useAudio() {
     }
   }, [])
 
+  const stopBell = useCallback(() => {
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      }
+    } catch (error) {
+      console.warn('Failed to stop bell sound:', error)
+    }
+  }, [])
+
   return {
     playBell,
+    stopBell,
     playSound
   }
 }

@@ -2,8 +2,10 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PATH } from '@/app/routes/path'
 import { ArrowRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const ContactNow = () => {
+  const { t } = useTranslation()
   const [isScrolling, setIsScrolling] = useState(false)
   const [sliderPosition, setSliderPosition] = useState(8)
   const navigate = useNavigate()
@@ -24,10 +26,10 @@ const ContactNow = () => {
               className='text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-white mb-4 sm:mb-6'
               style={{ fontWeight: 900 }}
             >
-              Đăng ký tư vấn ngay với FLOWPILOT
+              {t('action_contact_now.title')}
             </h2>
             <p className='text-base sm:text-lg lg:text-xl text-white/90 mb-8 sm:mb-10 lg:mb-12'>
-              Trở thành một trong những khách hàng đầu tiên của chúng tôi!
+              {t('action_contact_now.description')}
             </p>
 
             {/* Slide to Contact Form */}
@@ -38,7 +40,7 @@ const ContactNow = () => {
               >
                 {/* Background text */}
                 <div className='absolute inset-0 flex items-center justify-center text-gray-400 font-semibold text-base sm:text-lg pointer-events-none'>
-                  {isScrolling ? 'Đang chuyển đến trang báo giá...' : 'Trượt để tư vấn ngay →'}
+                  {isScrolling ? t('action_contact_now.sliding_btn') : t('action_contact_now.btn')}
                 </div>
 
                 {/* Slider Button */}
