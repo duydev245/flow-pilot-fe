@@ -50,7 +50,7 @@ const getStatusStyles = (status: string) => {
     case 'overdued':
       return {
         statusColor: 'bg-red-800',
-        displayText: 'Overdue'
+        displayText: 'Overdued'
       }
     default:
       return {

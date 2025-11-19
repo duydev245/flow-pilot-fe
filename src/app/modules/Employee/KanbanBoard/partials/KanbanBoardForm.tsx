@@ -121,71 +121,74 @@ export function KanbanBoardForm() {
     })
   )
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        // Fetch my tasks and all tasks
-        const [myTasksResponse, allTasksResponse] = await Promise.all([
-          MyTaskApi.getMyTask(),
-          MyTaskApi.getAllTasksByManager()
-        ])
+  // Function to fetch tasks from API
+  const fetchTasks = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      // Fetch my tasks and all tasks
+      const [myTasksResponse, allTasksResponse] = await Promise.all([
+        MyTaskApi.getMyTask(),
+        MyTaskApi.getAllTasksByManager()
+      ])
 
-        if (myTasksResponse.success && myTasksResponse.data && allTasksResponse.success && allTasksResponse.data) {
-          // Create a set of my task IDs for quick lookup
-          const myTaskIds = new Set(myTasksResponse.data.map(task => task.id))
+      if (myTasksResponse.success && myTasksResponse.data && allTasksResponse.success && allTasksResponse.data) {
+        // Create a set of my task IDs for quick lookup
+        const myTaskIds = new Set(myTasksResponse.data.map(task => task.id))
 
-          // Group all tasks by column based on status mapping
-          const tasksByColumn: Record<string, Card[]> = {
-            todo: [],
-            doing: [],
-            completed: [],
-            rejected: []
-          }
-
-          allTasksResponse.data.forEach((task) => {
-            const isMyTask = myTaskIds.has(task.id)
-            const card = convertTaskToCard(task, isMyTask)
-
-            // Map task status to kanban columns
-            switch (task.status) {
-              case 'todo':
-              case 'overdued':
-                tasksByColumn.todo.push(card)
-                break
-              case 'doing':
-                tasksByColumn.doing.push(card)
-                break
-              case 'reviewing':
-              case 'completed':
-              case 'feedbacked':
-                tasksByColumn.completed.push(card)
-                break
-              case 'rejected':
-                tasksByColumn.rejected.push(card)
-                break
-              default:
-                tasksByColumn.todo.push(card)
-                break
-            }
-          })
-
-          setColumns((prevColumns) =>
-            prevColumns.map((column) => ({
-              ...column,
-              cards: tasksByColumn[column.id] || []
-            }))
-          )
+        // Group all tasks by column based on status mapping
+        const tasksByColumn: Record<string, Card[]> = {
+          todo: [],
+          doing: [],
+          completed: [],
+          rejected: []
         }
-      } catch (err) {
-        setError('Failed to fetch tasks')
-        console.error('Error fetching tasks:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
 
+        allTasksResponse.data.forEach((task) => {
+          const isMyTask = myTaskIds.has(task.id)
+          const card = convertTaskToCard(task, isMyTask)
+
+          // Map task status to kanban columns
+          switch (task.status) {
+            case 'todo':
+              tasksByColumn.todo.push(card)
+              break
+            case 'overdued':
+              tasksByColumn.doing.push(card)
+              break
+            case 'doing':
+              tasksByColumn.doing.push(card)
+              break
+            case 'reviewing':
+            case 'completed':
+            case 'feedbacked':
+              tasksByColumn.completed.push(card)
+              break
+            case 'rejected':
+              tasksByColumn.rejected.push(card)
+              break
+            default:
+              tasksByColumn.todo.push(card)
+              break
+          }
+        })
+
+        setColumns((prevColumns) =>
+          prevColumns.map((column) => ({
+            ...column,
+            cards: tasksByColumn[column.id] || []
+          }))
+        )
+      }
+    } catch (err) {
+      setError('Failed to fetch tasks')
+      console.error('Error fetching tasks:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchTasks()
   }, [])
 
@@ -490,7 +493,7 @@ export function KanbanBoardForm() {
         onSortByChange={setSortBy}
         onSortOrderChange={setSortOrder}
       />
-      <TaskDetailModal open={detailModalOpen} onOpenChange={setDetailModalOpen} task={selectedTaskForDetail} />
+      <TaskDetailModal open={detailModalOpen} onOpenChange={setDetailModalOpen} task={selectedTaskForDetail} onTaskUpdated={fetchTasks} />
     </div>
   )
 }
