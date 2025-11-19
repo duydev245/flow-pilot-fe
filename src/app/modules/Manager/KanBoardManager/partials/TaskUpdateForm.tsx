@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/app/components/ui/textarea'
 import type { MyTask } from '@/app/modules/Employee/MyTasks/models/myTask.type'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { X } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
@@ -16,7 +17,12 @@ const taskUpdateSchema = yup.object({
   project_id: yup.string().required('Project ID is required'),
   name: yup.string().required('Task name is required').min(2, 'Task name must be at least 2 characters'),
   description: yup.string().notRequired(),
-  start_at: yup.string().required('Start date is required'),
+  start_at: yup.string().required('Start date is required').test('not-past', 'Start date cannot be in the past', function (value) {
+    if (!value) return true
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return new Date(value) >= today
+  }),
   due_at: yup
     .string()
     .required('Due date is required')
@@ -24,6 +30,12 @@ const taskUpdateSchema = yup.object({
       const { start_at } = this.parent
       if (!value || !start_at) return true
       return new Date(value) > new Date(start_at)
+    })
+    .test('not-past', 'Due date cannot be in the past', function (value) {
+      if (!value) return true
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      return new Date(value) >= today
     }),
   time_spent_in_minutes: yup.number().min(0, 'Time spent cannot be negative').default(0),
   priority: yup.string().oneOf(['low', 'medium', 'high'], 'Invalid priority').required('Priority is required'),
@@ -55,6 +67,7 @@ interface TaskUpdateFormProps {
 export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [selectedAttachments, setSelectedAttachments] = useState<File[]>([])
 
   // Check if task is in final state (cannot be edited)
   const isTaskFinalized = task.status === 'feedbacked' || task.status === 'rejected'
@@ -95,7 +108,21 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
       const response = await MyTaskApi.updateTask(task.id, updateData)
 
       if (response.success) {
-        toast.success('Task updated successfully!')
+        // Upload attachments if any
+        if (selectedAttachments.length > 0) {
+          try {
+            for (const file of selectedAttachments) {
+              await MyTaskApi.uploadFileByTaskId(task.id, file)
+            }
+            toast.success('Task updated and attachments uploaded successfully!')
+          } catch (uploadError) {
+            console.error('Error uploading attachments:', uploadError)
+            toast.warning('Task updated but failed to upload some attachments')
+          }
+        } else {
+          toast.success('Task updated successfully!')
+        }
+
         onSuccess?.()
       }
     } catch (error: any) {
@@ -114,10 +141,28 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
     }
   }
 
+  const handleAttachmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files) {
+      setSelectedAttachments(Array.from(files))
+    }
+  }
+
   return (
     <Card className='w-full max-w-2xl mx-auto'>
       <CardHeader>
-        <CardTitle>Update Task</CardTitle>
+        <div className='flex flex-row items-center justify-between'>
+          <CardTitle>Update Task</CardTitle>
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            onClick={onCancel}
+            className='h-8 w-8 p-0'
+          >
+            <X className='h-4 w-4' />
+          </Button>
+        </div>
         {isTaskFinalized && (
           <div className='bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-2'>
             <div className='flex'>
@@ -198,7 +243,7 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
               <Controller
                 name='start_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' disabled={isTaskFinalized} {...field} />}
+                render={({ field }) => <Input type='datetime-local' min={new Date().toISOString().slice(0, 16)} disabled={isTaskFinalized} {...field} />}
               />
               {errors.start_at && <p className='text-sm text-red-500 mt-1'>{errors.start_at.message}</p>}
             </div>
@@ -207,7 +252,7 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
               <Controller
                 name='due_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' disabled={isTaskFinalized} {...field} />}
+                render={({ field }) => <Input type='datetime-local' min={new Date().toISOString().slice(0, 16)} disabled={isTaskFinalized} {...field} />}
               />
               {errors.due_at && <p className='text-sm text-red-500 mt-1'>{errors.due_at.message}</p>}
             </div>
@@ -259,6 +304,28 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
               disabled={isTaskFinalized}
             />
             {selectedImage && <p className='text-sm text-gray-600'>Selected: {selectedImage.name}</p>}
+          </div>
+
+          {/* Task Attachments */}
+          <div>
+            <label className='block text-sm font-medium mb-2'>Task Attachments</label>
+            <Input
+              type='file'
+              multiple
+              onChange={handleAttachmentChange}
+              className='mb-2'
+              disabled={isTaskFinalized}
+            />
+            {selectedAttachments.length > 0 && (
+              <div className='text-sm text-gray-600'>
+                <p>Selected {selectedAttachments.length} file(s):</p>
+                <ul className='list-disc list-inside'>
+                  {selectedAttachments.map((file, index) => (
+                    <li key={index}>{file.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Actions */}

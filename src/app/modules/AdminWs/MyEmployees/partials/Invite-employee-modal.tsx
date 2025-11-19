@@ -1,13 +1,12 @@
 import type React from 'react'
 import type { CreateEmployeePayload } from '../models/AdminwsInterface'
 
-import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 import { Button } from '@/app/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
-import { X } from 'lucide-react'
+import { useState } from 'react'
 
 interface CreateEmployeeData {
   name: string
@@ -38,7 +37,6 @@ export function CreateEmployeeModal({ isOpen, onClose, onCreate }: CreateEmploye
 
     // Convert role string to role_id
     const roleMap: { [key: string]: number } = {
-      'Super Admin': 1,
       'Admin': 2,
       'Project Manager': 3,
       'Employee': 4
@@ -75,9 +73,9 @@ export function CreateEmployeeModal({ isOpen, onClose, onCreate }: CreateEmploye
               <DialogTitle className='text-lg font-semibold'>Create New Employee</DialogTitle>
               <p className='text-sm text-muted-foreground mt-1'>Add a new employee to your workspace.</p>
             </div>
-            <Button variant='ghost' size='icon' onClick={onClose}>
+            {/* <Button variant='ghost' size='icon' onClick={onClose}>
               <X className='h-4 w-4' />
-            </Button>
+            </Button> */}
           </div>
         </DialogHeader>
 
@@ -112,7 +110,6 @@ export function CreateEmployeeModal({ isOpen, onClose, onCreate }: CreateEmploye
                 <SelectValue placeholder='Select role' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='Super Admin'>Super Admin</SelectItem>
                 <SelectItem value='Admin'>Admin</SelectItem>
                 <SelectItem value='Project Manager'>Project Manager</SelectItem>
                 <SelectItem value='Employee'>Employee</SelectItem>

@@ -37,6 +37,7 @@ export interface Card {
   comments: number
   avatars: string[]
   originalTask: MyTask
+  isMyTask?: boolean
 }
 
 export interface Column {
@@ -101,7 +102,8 @@ const convertTaskToCard = (task: MyTask): Card => {
     avatars: task.assignees.map(
       (assignee) => assignee.user.avatar_url || `https://i.pravatar.cc/150?u=${assignee.user.id}`
     ),
-    originalTask: task
+    originalTask: task,
+    isMyTask: true // Managers can drag all tasks
   }
 }
 
