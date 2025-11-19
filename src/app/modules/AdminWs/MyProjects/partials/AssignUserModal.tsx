@@ -66,7 +66,7 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
 
   // Filter users based on search and filters
   useEffect(() => {
-    let filtered = users.filter(user => user.status === 'active')
+    let filtered = users.filter(user => user.status === 'active' && user.role?.role === 'EMPLOYEE')
 
     // Search filter
     if (searchQuery) {
@@ -82,7 +82,7 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
       filtered = filtered.filter(user => user.workspace?.name === selectedWorkspace)
     }
 
-    // Role filter
+    // Role filter (additional filtering beyond EMPLOYEE)
     if (selectedRole !== 'all') {
       filtered = filtered.filter(user => user.role?.role === selectedRole)
     }
@@ -357,7 +357,6 @@ export function AssignUserModal({ isOpen, onClose, project, onAssign }: AssignUs
                           >
                             <div className='font-medium text-gray-900'>{user.name}</div>
                             <div className='text-sm text-gray-500'>{user.email}</div>
-                            <div className='text-xs text-gray-400'>{user.workspace?.name || 'No workspace'}</div>
                           </div>
                         </div>
                         <div className='flex items-center space-x-2'>

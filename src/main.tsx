@@ -11,14 +11,7 @@ import { SocketProvider } from './app/components/Notification/hooks/SocketProvid
 import { TimerProvider } from './app/providers'
 import './i18n.js'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 0
-    }
-  }
-})
+const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')!).render(
   <Provider store={store}>

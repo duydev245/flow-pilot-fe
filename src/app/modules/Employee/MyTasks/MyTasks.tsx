@@ -28,7 +28,7 @@ import {
   Upload,
   User
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import type { FileByTask, MyTask } from './models/myTask.type'
 import { AddChecklistItem } from './partials/AddChecklistItem'
 import { ChecklistItem } from './partials/ChecklistItem'
@@ -207,7 +207,7 @@ export default function MyTasksPage() {
   }
 
   // Filter and sort tasks
-  const filteredAndSortedTasks = () => {
+  const filteredAndSortedTasks = useCallback(() => {
     let filteredTasks = tasks
 
     // Filter by status
@@ -220,8 +220,37 @@ export default function MyTasksPage() {
       filteredTasks = filteredTasks.filter((task) => task.name.toLowerCase().includes(searchTerm.toLowerCase()))
     }
 
-    // Sort tasks
+    // Sort tasks with status priority first, then priority within each status
     const sortedTasks = [...filteredTasks].sort((a, b) => {
+      // Primary sort: Status order (overdued -> doing -> todo -> reviewing -> feedbacked)
+      const statusOrder = {
+        overdued: 1,
+        doing: 2,
+        todo: 3,
+        reviewing: 4,
+        feedbacked: 5,
+        completed: 6,
+        rejected: 7
+      }
+
+      const aStatusOrder = statusOrder[a.status as keyof typeof statusOrder] || 999
+      const bStatusOrder = statusOrder[b.status as keyof typeof statusOrder] || 999
+
+      // If status is different, sort by status
+      if (aStatusOrder !== bStatusOrder) {
+        return aStatusOrder - bStatusOrder
+      }
+
+      // Secondary sort: Priority within same status (high -> medium -> low)
+      const priorityOrder = { high: 1, medium: 2, low: 3 }
+      const aPriorityOrder = priorityOrder[a.priority as keyof typeof priorityOrder] || 999
+      const bPriorityOrder = priorityOrder[b.priority as keyof typeof priorityOrder] || 999
+
+      if (aPriorityOrder !== bPriorityOrder) {
+        return aPriorityOrder - bPriorityOrder
+      }
+
+      // Tertiary sort: Apply user-selected sorting option
       let aValue: any
       let bValue: any
 
@@ -230,50 +259,19 @@ export default function MyTasksPage() {
           aValue = new Date(a.due_at).getTime()
           bValue = new Date(b.due_at).getTime()
           break
-        case 'priority': {
-          const priorityOrder = { high: 3, medium: 2, low: 1 }
-          aValue = priorityOrder[a.priority as keyof typeof priorityOrder] || 0
-          bValue = priorityOrder[b.priority as keyof typeof priorityOrder] || 0
-          break
-        }
         case 'name':
           aValue = a.name.toLowerCase()
           bValue = b.name.toLowerCase()
           break
-        case 'status': {
-          // Custom status order: todo -> doing -> overdued -> completed -> reviewing -> rejected -> feedbacked
-          const statusOrder = {
-            todo: 1,
-            doing: 2,
-            overdued: 3,
-            completed: 4,
-            reviewing: 5,
-            rejected: 6,
-            feedbacked: 7
-          }
-          aValue = statusOrder[a.status as keyof typeof statusOrder] || 999
-          bValue = statusOrder[b.status as keyof typeof statusOrder] || 999
-          break
-        }
         case 'created_at':
           aValue = new Date(a.created_at).getTime()
           bValue = new Date(b.created_at).getTime()
           break
-        default: {
-          // Default sorting by custom status order
-          const defaultStatusOrder = {
-            todo: 1,
-            doing: 2,
-            overdued: 3,
-            completed: 4,
-            reviewing: 5,
-            rejected: 6,
-            feedbacked: 7
-          }
-          aValue = defaultStatusOrder[a.status as keyof typeof defaultStatusOrder] || 999
-          bValue = defaultStatusOrder[b.status as keyof typeof defaultStatusOrder] || 999
+        default:
+          // Default to created_at if no specific sort is selected
+          aValue = new Date(a.created_at).getTime()
+          bValue = new Date(b.created_at).getTime()
           break
-        }
       }
 
       if (sortOrder === 'asc') {
@@ -284,7 +282,7 @@ export default function MyTasksPage() {
     })
 
     return sortedTasks
-  }
+  }, [tasks, statusFilter, searchTerm, sortBy, sortOrder])
 
   const fetchTaskFiles = async (taskId: string) => {
     try {
@@ -347,8 +345,6 @@ export default function MyTasksPage() {
   }, [selectedTask])
 
   const selectedTaskData = tasks.find((task) => task.id === selectedTask)
-
-
 
   if (loading) {
     return (
@@ -494,11 +490,11 @@ export default function MyTasksPage() {
                   <div>
                     <h1 className='text-2xl font-semibold text-gray-900'>{selectedTaskData.name}</h1>
                     {selectedTaskData.status !== 'reviewing' &&
-                     selectedTaskData.status !== 'completed' &&
-                     selectedTaskData.status !== 'feedbacked' &&
-                     selectedTaskData.status !== 'rejected' && (
-                      <p className='text-2xl font-semibold text-red-600 mb-4'>(Deadline Approaching)</p>
-                    )}
+                      selectedTaskData.status !== 'completed' &&
+                      selectedTaskData.status !== 'feedbacked' &&
+                      selectedTaskData.status !== 'rejected' && (
+                        <p className='text-2xl font-semibold text-red-600 mb-4'>(DEADLINE APPROACHING)</p>
+                      )}
                   </div>
                   <div className='flex gap-2'>
                     {selectedTaskData.status === 'todo' && (
@@ -607,13 +603,12 @@ export default function MyTasksPage() {
                   </div>
 
                   {selectedTaskData.status !== 'reviewing' &&
-                   selectedTaskData.status !== 'completed' &&
-                   selectedTaskData.status !== 'feedbacked' &&
-                   selectedTaskData.status !== 'rejected' && (
-                    <AddChecklistItem taskId={selectedTaskData.id} onSuccess={refreshTasks} />
-                  )}
+                    selectedTaskData.status !== 'completed' &&
+                    selectedTaskData.status !== 'feedbacked' &&
+                    selectedTaskData.status !== 'rejected' && (
+                      <AddChecklistItem taskId={selectedTaskData.id} onSuccess={refreshTasks} />
+                    )}
                 </div>
-
 
                 <Separator className='my-6' />
 
@@ -640,16 +635,16 @@ export default function MyTasksPage() {
                   <Separator className='my-6' />
 
                   {selectedTaskData.status !== 'reviewing' &&
-                   selectedTaskData.status !== 'completed' &&
-                   selectedTaskData.status !== 'feedbacked' &&
-                   selectedTaskData.status !== 'rejected' && (
-                    <CreateTaskContentForm
-                      taskId={selectedTaskData.id}
-                      userId={currentUserId}
-                      type='comment'
-                      onSuccess={refreshTasks}
-                    />
-                  )}
+                    selectedTaskData.status !== 'completed' &&
+                    selectedTaskData.status !== 'feedbacked' &&
+                    selectedTaskData.status !== 'rejected' && (
+                      <CreateTaskContentForm
+                        taskId={selectedTaskData.id}
+                        userId={currentUserId}
+                        type='comment'
+                        onSuccess={refreshTasks}
+                      />
+                    )}
                 </div>
 
                 <Separator className='my-6' />
@@ -677,18 +672,18 @@ export default function MyTasksPage() {
 
                   {/* Add Note Form */}
                   {selectedTaskData.status !== 'reviewing' &&
-                   selectedTaskData.status !== 'completed' &&
-                   selectedTaskData.status !== 'feedbacked' &&
-                   selectedTaskData.status !== 'rejected' && (
-                    <CreateTaskContentForm
-                      taskId={selectedTaskData.id}
-                      userId={currentUserId}
-                      type='note'
-                      onSuccess={refreshTasks}
-                      placeholder='Add a note...'
-                      buttonText='Add Note'
-                    />
-                  )}
+                    selectedTaskData.status !== 'completed' &&
+                    selectedTaskData.status !== 'feedbacked' &&
+                    selectedTaskData.status !== 'rejected' && (
+                      <CreateTaskContentForm
+                        taskId={selectedTaskData.id}
+                        userId={currentUserId}
+                        type='note'
+                        onSuccess={refreshTasks}
+                        placeholder='Add a note...'
+                        buttonText='Add Note'
+                      />
+                    )}
                 </div>
 
                 <Separator className='my-6' />
@@ -738,29 +733,29 @@ export default function MyTasksPage() {
                       disabled={uploadingFile}
                     />
                     {selectedTaskData.status !== 'reviewing' &&
-                     selectedTaskData.status !== 'completed' &&
-                     selectedTaskData.status !== 'feedbacked' &&
-                     selectedTaskData.status !== 'rejected' && (
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        className='w-full mt-2'
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingFile}
-                      >
-                        {uploadingFile ? (
-                          <>
-                            <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className='w-4 h-4 mr-2' />
-                            Upload Attachment
-                          </>
-                        )}
-                      </Button>
-                    )}
+                      selectedTaskData.status !== 'completed' &&
+                      selectedTaskData.status !== 'feedbacked' &&
+                      selectedTaskData.status !== 'rejected' && (
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          className='w-full mt-2'
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingFile}
+                        >
+                          {uploadingFile ? (
+                            <>
+                              <Loader2 className='w-4 h-4 mr-2 animate-spin' />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className='w-4 h-4 mr-2' />
+                              Upload Attachment
+                            </>
+                          )}
+                        </Button>
+                      )}
                   </div>
                 </div>
               </div>

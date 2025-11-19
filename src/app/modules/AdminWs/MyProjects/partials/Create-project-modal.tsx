@@ -36,12 +36,33 @@ export function CreateProjectModal({ isOpen, onClose, onCreate, managers }: Crea
     status: 'active'
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({})
+
+  // Get today's date in YYYY-MM-DD format for min attribute
+  const getTodayDate = () => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  }
+
+  // Get minimum end date (start date or today)
+  const getMinEndDate = () => {
+    if (formData.start_date) {
+      return formData.start_date
+    }
+    return getTodayDate()
+  }
 
   // Filter to only active managers
   const activeManagers = managers.filter((manager) => manager.status === 'active')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Check for validation errors
+    if (Object.keys(validationErrors).length > 0) {
+      return
+    }
+
     setIsLoading(true)
     onCreate(formData)
     setIsLoading(false)
@@ -58,10 +79,62 @@ export function CreateProjectModal({ isOpen, onClose, onCreate, managers }: Crea
       team_size: 1,
       status: 'active'
     })
+    setValidationErrors({})
   }
 
   const handleInputChange = (field: keyof CreateProjectFormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+
+    // Clear validation error for this field
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
+
+    // Validate dates
+    if (field === 'start_date' || field === 'end_date') {
+      validateDates(field, value as string)
+    }
+  }
+
+  const validateDates = (changedField: string, value: string) => {
+    const errors: {[key: string]: string} = {}
+
+    if (changedField === 'start_date') {
+      // Check if start date is in the past
+      const startDate = new Date(value)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0) // Reset time to start of day
+
+      if (startDate < today) {
+        errors.start_date = 'Start date cannot be in the past'
+      }
+
+      // Check if end date is still valid
+      if (formData.end_date) {
+        const endDate = new Date(formData.end_date)
+        if (endDate <= startDate) {
+          errors.end_date = 'End date must be after start date'
+        }
+      }
+    }
+
+    if (changedField === 'end_date') {
+      // Check if end date is before start date
+      if (formData.start_date) {
+        const startDate = new Date(formData.start_date)
+        const endDate = new Date(value)
+
+        if (endDate <= startDate) {
+          errors.end_date = 'End date must be after start date'
+        }
+      }
+    }
+
+    setValidationErrors((prev) => ({ ...prev, ...errors }))
   }
 
 
@@ -135,8 +208,13 @@ export function CreateProjectModal({ isOpen, onClose, onCreate, managers }: Crea
                 type='date'
                 value={formData.start_date}
                 onChange={(e) => handleInputChange('start_date', e.target.value)}
+                min={getTodayDate()}
                 required
+                className={validationErrors.start_date ? 'border-red-500' : ''}
               />
+              {validationErrors.start_date && (
+                <p className='text-sm text-red-500'>{validationErrors.start_date}</p>
+              )}
             </div>
             <div className='space-y-2'>
               <Label htmlFor='end-date'>End Date</Label>
@@ -145,14 +223,19 @@ export function CreateProjectModal({ isOpen, onClose, onCreate, managers }: Crea
                 type='date'
                 value={formData.end_date}
                 onChange={(e) => handleInputChange('end_date', e.target.value)}
+                min={getMinEndDate()}
                 required
+                className={validationErrors.end_date ? 'border-red-500' : ''}
               />
+              {validationErrors.end_date && (
+                <p className='text-sm text-red-500'>{validationErrors.end_date}</p>
+              )}
             </div>
           </div>
 
 
 
-          <div className='space-y-2'>
+          {/* <div className='space-y-2'>
             <Label htmlFor='team-size'>Team Size</Label>
             <Input
               id='team-size'
@@ -164,9 +247,9 @@ export function CreateProjectModal({ isOpen, onClose, onCreate, managers }: Crea
               placeholder='Enter team size'
               required
             />
-          </div>
+          </div> */}
 
-          <div className='space-y-2'>
+          {/* <div className='space-y-2'>
             <Label>Status</Label>
             <Select
               value={formData.status}
@@ -180,9 +263,13 @@ export function CreateProjectModal({ isOpen, onClose, onCreate, managers }: Crea
                 <SelectItem value='inactive'>Inactive</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
 
-          <Button type='submit' className='w-full bg-blue-600 hover:bg-blue-700 text-white mt-6' disabled={isLoading}>
+          <Button
+            type='submit'
+            className='w-full bg-blue-600 hover:bg-blue-700 text-white mt-6'
+            disabled={isLoading || Object.keys(validationErrors).length > 0}
+          >
             {isLoading ? 'CREATING...' : 'CREATE PROJECT'}
           </Button>
         </form>
