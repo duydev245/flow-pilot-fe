@@ -25,12 +25,6 @@ const taskUpdateSchema = yup.object({
       const { start_at } = this.parent
       if (!value || !start_at) return true
       return new Date(value) > new Date(start_at)
-    })
-    .test('not-past', 'Due date cannot be in the past', function (value) {
-      if (!value) return true
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      return new Date(value) >= today
     }),
   priority: yup.string().oneOf(['low', 'medium', 'high'], 'Invalid priority').required('Priority is required'),
   status: yup
@@ -219,7 +213,7 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
               <Controller
                 name='start_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' disabled={isTaskFinalized} {...field} />}
+                render={({ field }) => <Input type='datetime-local' disabled {...field} />}
               />
               {errors.start_at && <p className='text-sm text-red-500 mt-1'>{errors.start_at.message}</p>}
             </div>
@@ -228,7 +222,7 @@ export function TaskUpdateForm({ task, onSuccess, onCancel }: TaskUpdateFormProp
               <Controller
                 name='due_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' min={new Date().toISOString().slice(0, 16)} disabled={isTaskFinalized} {...field} />}
+                render={({ field }) => <Input type='datetime-local' disabled={isTaskFinalized} {...field} />}
               />
               {errors.due_at && <p className='text-sm text-red-500 mt-1'>{errors.due_at.message}</p>}
             </div>

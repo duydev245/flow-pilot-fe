@@ -21,7 +21,12 @@ const taskSchema = yup.object({
   project_id: yup.string().required('Project ID is required'),
   name: yup.string().required('Task name is required').min(2, 'Task name must be at least 2 characters'),
   description: yup.string().notRequired(),
-  start_at: yup.string().required('Start date is required'),
+  start_at: yup.string().required('Start date is required').test('not-past', 'Start date cannot be in the past', function (value) {
+    if (!value) return true
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return new Date(value) >= today
+  }),
   due_at: yup
     .string()
     .required('Due date is required')
@@ -247,7 +252,7 @@ export function TaskCreateForm({ onSuccess, onCancel }: TaskCreateFormProps) {
               <Controller
                 name='start_at'
                 control={control}
-                render={({ field }) => <Input type='datetime-local' {...field} />}
+                render={({ field }) => <Input type='datetime-local' min={new Date().toISOString().slice(0, 16)} {...field} />}
               />
               {errors.start_at && <p className='text-sm text-red-500 mt-1'>{errors.start_at.message}</p>}
             </div>
