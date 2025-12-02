@@ -32,26 +32,22 @@ interface FormErrors {
 }
 
 // Create validation schema with i18n support
-const createConsultationSchema = (t: any) => yup.object().shape({
-  name: yup.string().trim().required(t('consultationModal.name.required')).min(2, t('consultationModal.name.minLength')),
-  email: yup.string().trim().required(t('consultationModal.email.required')).email(t('consultationModal.email.invalid')),
-  phone: yup
-    .string()
-    .trim()
-    .required(t('consultationModal.phone.required'))
-    .test('vietnam-phone', t('consultationModal.phone.invalid'), function (value) {
-      if (!value) return false
-      // Loại bỏ khoảng trắng, gạch và dấu ngoặc
-      const cleanPhone = value.replace(/[\s\-()]/g, '')
-
-      // Cho phép 10 hoặc 11 chữ số
-      const vietnamPhonePattern = /(84|0[2|3|5|7|8|9])+([0-9]{9})\b/
-
-      return vietnamPhonePattern.test(cleanPhone)
-    }),
-  company_name: yup.string().trim(),
-  note: yup.string().trim()
-})
+const createConsultationSchema = (t: any) =>
+  yup.object().shape({
+    name: yup
+      .string()
+      .trim()
+      .required(t('consultationModal.name.required'))
+      .min(2, t('consultationModal.name.minLength')),
+    email: yup
+      .string()
+      .trim()
+      .required(t('consultationModal.email.required'))
+      .email(t('consultationModal.email.invalid')),
+    phone: yup.string().trim().required(t('consultationModal.phone.required')),
+    company_name: yup.string().trim(),
+    note: yup.string().trim()
+  })
 
 export function ConsultationModal({ isOpen, onClose, packageId, packageName }: ConsultationModalProps) {
   const { t } = useTranslation()
@@ -171,7 +167,10 @@ export function ConsultationModal({ isOpen, onClose, packageId, packageName }: C
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className='sm:max-w-lg max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
-          <DialogTitle>{t('consultationModal.title')}{packageName}</DialogTitle>
+          <DialogTitle>
+            {t('consultationModal.title')}
+            {packageName}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className='space-y-4 pt-2'>
